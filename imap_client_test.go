@@ -12,16 +12,22 @@ import (
 	"github.com/emersion/go-imap/server"
 )
 
-func TestFetchEmails(t *testing.T) {
+// setupMockIMAPServer creates and starts a mock IMAP server with recent and old test emails.
+// It returns the server host, port, username, password, and a cleanup function.
+func setupMockIMAPServer(t *testing.T) (host string, port int, username, password string, cleanup func()) {
 	// Create a memory backend
 	be := memory.New()
 
+	// Set credentials
+	username = "username"
+	password = "password"
+
 	// Create a user
 	user := &memory.User{}
-	
+
 	// Login to get the user
 	connInfo := &imap.ConnInfo{}
-	u, err := be.Login(connInfo, "username", "password")
+	u, err := be.Login(connInfo, username, password)
 	if err != nil {
 		// First login creates the user
 		t.Logf("First login creates the user: %v", err)
@@ -41,7 +47,7 @@ func TestFetchEmails(t *testing.T) {
 		t.Fatalf("Failed to get INBOX: %v", err)
 	}
 	mbox := mboxInterface.(*memory.Mailbox)
-	
+
 	// Clear any existing messages in the mailbox
 	mbox.Messages = []*memory.Message{}
 
@@ -53,7 +59,7 @@ func TestFetchEmails(t *testing.T) {
 		"Date: " + recentDate.Format(time.RFC1123Z) + "\r\n" +
 		"\r\n" +
 		"This is a recent test email.")
-	
+
 	err = mbox.CreateMessage([]string{"\\Seen"}, recentDate, recentBody)
 	if err != nil {
 		t.Fatalf("Failed to create recent message: %v", err)
@@ -67,7 +73,7 @@ func TestFetchEmails(t *testing.T) {
 		"Date: " + oldDate.Format(time.RFC1123Z) + "\r\n" +
 		"\r\n" +
 		"This is an old test email.")
-	
+
 	err = mbox.CreateMessage([]string{"\\Seen"}, oldDate, oldBody)
 	if err != nil {
 		t.Fatalf("Failed to create old message: %v", err)
@@ -82,20 +88,33 @@ func TestFetchEmails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to listen: %v", err)
 	}
-	defer listener.Close()
 
 	// Start the server
 	go s.Serve(listener)
-	defer s.Close()
 
 	// Get the chosen port
 	listenerAddr := listener.Addr().String()
-	host, port, _ := net.SplitHostPort(listenerAddr)
+	host, portStr, _ := net.SplitHostPort(listenerAddr)
 	portNum := 0
-	fmt.Sscanf(port, "%d", &portNum)
+	fmt.Sscanf(portStr, "%d", &portNum)
+	port = portNum
+
+	// Return a cleanup function
+	cleanup = func() {
+		listener.Close()
+		s.Close()
+	}
+
+	return host, port, username, password, cleanup
+}
+
+func TestFetchEmails(t *testing.T) {
+	// Setup mock server
+	host, port, username, password, cleanup := setupMockIMAPServer(t)
+	defer cleanup()
 
 	// Use the FetchEmails function with tls=false for testing
-	emails, err := FetchEmails(host, portNum, "username", "password", "INBOX", 7, false)
+	emails, err := FetchEmails(host, port, username, password, "INBOX", 7, false)
 	if err != nil {
 		t.Fatalf("FetchEmails failed: %v", err)
 	}
@@ -110,7 +129,7 @@ func TestFetchEmails(t *testing.T) {
 	dateThreshold := time.Now().AddDate(0, 0, -7)
 	for i, email := range emails {
 		if email.Date.Before(dateThreshold) {
-			t.Errorf("Email %d has date %v, which is before the threshold %v", 
+			t.Errorf("Email %d has date %v, which is before the threshold %v",
 				i, email.Date, dateThreshold)
 		}
 	}
