@@ -12,9 +12,18 @@ import (
 	"github.com/emersion/go-imap/server"
 )
 
-// setupMockIMAPServer creates and starts a mock IMAP server with recent and old test emails.
+// TestMessage holds the data needed to create a test email message.
+type TestMessage struct {
+	Date    time.Time
+	Subject string
+	From    string // e.g., "Sender <sender@example.com>"
+	To      string // e.g., "Recipient <recipient@example.com>"
+	Body    string
+}
+
+// setupMockIMAPServer creates and starts a mock IMAP server with the given test messages.
 // It returns the server host, port, username, password, and a cleanup function.
-func setupMockIMAPServer(t *testing.T) (host string, port int, username, password string, cleanup func()) {
+func setupMockIMAPServer(t *testing.T, messages []TestMessage) (host string, port int, username, password string, cleanup func()) {
 	// Create a memory backend
 	be := memory.New()
 
@@ -51,32 +60,22 @@ func setupMockIMAPServer(t *testing.T) (host string, port int, username, passwor
 	// Clear any existing messages in the mailbox
 	mbox.Messages = []*memory.Message{}
 
-	// Create a message within the date range (3 days ago)
-	recentDate := time.Now().AddDate(0, 0, -3)
-	recentBody := strings.NewReader("From: Sender <sender@example.com>\r\n" +
-		"To: Recipient <recipient@example.com>\r\n" +
-		"Subject: Recent Test Email\r\n" +
-		"Date: " + recentDate.Format(time.RFC1123Z) + "\r\n" +
-		"\r\n" +
-		"This is a recent test email.")
-
-	err = mbox.CreateMessage([]string{"\\Seen"}, recentDate, recentBody)
-	if err != nil {
-		t.Fatalf("Failed to create recent message: %v", err)
-	}
-
-	// Create a message outside the date range (10 days ago)
-	oldDate := time.Now().AddDate(0, 0, -10)
-	oldBody := strings.NewReader("From: Sender <sender@example.com>\r\n" +
-		"To: Recipient <recipient@example.com>\r\n" +
-		"Subject: Old Test Email\r\n" +
-		"Date: " + oldDate.Format(time.RFC1123Z) + "\r\n" +
-		"\r\n" +
-		"This is an old test email.")
-
-	err = mbox.CreateMessage([]string{"\\Seen"}, oldDate, oldBody)
-	if err != nil {
-		t.Fatalf("Failed to create old message: %v", err)
+	// Add all test messages to the mailbox
+	for i, msg := range messages {
+		// Format the email with headers and body
+		var fullMsg strings.Builder
+		fmt.Fprintf(&fullMsg, "From: %s\r\n", msg.From)
+		fmt.Fprintf(&fullMsg, "To: %s\r\n", msg.To)
+		fmt.Fprintf(&fullMsg, "Subject: %s\r\n", msg.Subject)
+		fmt.Fprintf(&fullMsg, "Date: %s\r\n", msg.Date.Format(time.RFC1123Z))
+		fmt.Fprintf(&fullMsg, "\r\n%s", msg.Body)
+		
+		// Create the message in the mailbox
+		err = mbox.CreateMessage([]string{"\\Seen"}, msg.Date, strings.NewReader(fullMsg.String()))
+		if err != nil {
+			t.Fatalf("Failed to create message #%d (%s): %v", i+1, msg.Subject, err)
+		}
+		t.Logf("Added message #%d: %s", i+1, msg.Subject)
 	}
 
 	// Create a new server
@@ -109,8 +108,28 @@ func setupMockIMAPServer(t *testing.T) (host string, port int, username, passwor
 }
 
 func TestFetchEmails(t *testing.T) {
-	// Setup mock server
-	host, port, username, password, cleanup := setupMockIMAPServer(t)
+	// Define test messages
+	recentDate := time.Now().AddDate(0, 0, -3)
+	oldDate := time.Now().AddDate(0, 0, -10)
+	testMessages := []TestMessage{
+		{
+			Date:    recentDate,
+			Subject: "Recent Test Email",
+			From:    "Sender <sender@example.com>",
+			To:      "Recipient <recipient@example.com>",
+			Body:    "This is a recent test email.",
+		},
+		{
+			Date:    oldDate,
+			Subject: "Old Test Email",
+			From:    "Sender <sender@example.com>",
+			To:      "Recipient <recipient@example.com>",
+			Body:    "This is an old test email.",
+		},
+	}
+
+	// Setup mock server with our test messages
+	host, port, username, password, cleanup := setupMockIMAPServer(t, testMessages)
 	defer cleanup()
 
 	// Use the FetchEmails function with tls=false for testing
