@@ -4,10 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
-
-	"github.com/emersion/go-imap"
-	"github.com/emersion/go-imap/client"
 )
 
 func main() {
@@ -26,84 +22,25 @@ func main() {
 		log.Fatal("server, username, and password are required")
 	}
 
-	// Connect to server
-	addr := fmt.Sprintf("%s:%d", *server, *port)
-	c, err := client.DialTLS(addr, nil)
+	// Fetch emails using the IMAP client
+	emails, err := FetchEmails(*server, *port, *username, *password, *folder, *days)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error fetching emails: %v\n", err)
 	}
-	log.Printf("Connected to %s\n", addr)
 
-	// Cleanup
-	defer c.Logout()
-
-	// Login
-	if err := c.Login(*username, *password); err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Logged in as %s\n", *username)
-
-	// Select folder
-	_, err = c.Select(*folder, false)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Selected folder: %s\n", *folder)
-
-	// Calculate the date threshold
-	since := time.Now().AddDate(0, 0, -*days)
-
-	// Search criteria
-	criteria := imap.NewSearchCriteria()
-	criteria.Since = since
-
-	// Search for messages
-	uids, err := c.Search(criteria)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Found %d messages\n", len(uids))
-
-	if len(uids) == 0 {
+	// Print messages info
+	if len(emails) == 0 {
+		fmt.Println("No emails found matching the criteria.")
 		return
 	}
 
-	// Create sequence set for fetching
-	seqSet := new(imap.SeqSet)
-	seqSet.AddNum(uids...)
-
-	// Define what to fetch
-	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate}
-
-	// Fetch messages
-	messages := make(chan *imap.Message, 10)
-	done := make(chan error, 1)
-	go func() {
-		done <- c.Fetch(seqSet, items, messages)
-	}()
-
-	// Print messages info
-	for msg := range messages {
+	fmt.Printf("Fetched %d emails:\n", len(emails))
+	for _, email := range emails {
 		fmt.Printf("\n=== Message ===\n")
-		fmt.Printf("UID: %d\n", msg.Uid)
-		fmt.Printf("Date: %v\n", msg.InternalDate)
-		fmt.Printf("Subject: %s\n", msg.Envelope.Subject)
-		fmt.Printf("From: %v\n", formatAddresses(msg.Envelope.From))
-		fmt.Printf("To: %v\n", formatAddresses(msg.Envelope.To))
+		fmt.Printf("UID: %d\n", email.UID)
+		fmt.Printf("Date: %v\n", email.Date)
+		fmt.Printf("Subject: %s\n", email.Subject)
+		fmt.Printf("From: %v\n", email.From)
+		fmt.Printf("To: %v\n", email.To)
 	}
-
-	if err := <-done; err != nil {
-		log.Fatal(err)
-	}
-}
-
-func formatAddresses(addresses []*imap.Address) string {
-	if len(addresses) == 0 {
-		return ""
-	}
-	addr := addresses[0]
-	if addr.PersonalName != "" {
-		return fmt.Sprintf("%s <%s@%s>", addr.PersonalName, addr.MailboxName, addr.HostName)
-	}
-	return fmt.Sprintf("%s@%s", addr.MailboxName, addr.HostName)
 }
