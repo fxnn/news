@@ -22,8 +22,8 @@ func main() {
 		log.Fatal("server, username, and password are required")
 	}
 
-	// Fetch emails using the IMAP client
-	emails, err := FetchEmails(*server, *port, *username, *password, *folder, *days)
+	// Fetch emails using the IMAP client (with TLS)
+	emails, err := FetchEmails(*server, *port, *username, *password, *folder, *days, true)
 	if err != nil {
 		log.Fatalf("Error fetching emails: %v\n", err)
 	}

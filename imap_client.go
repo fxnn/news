@@ -19,10 +19,20 @@ type Email struct {
 }
 
 // FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range.
-func FetchEmails(server string, port int, username, password, folder string, days int) ([]Email, error) {
+func FetchEmails(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
 	// Connect to server
 	addr := fmt.Sprintf("%s:%d", server, port)
-	c, err := client.DialTLS(addr, nil)
+	
+	var c *client.Client
+	var err error
+	
+	// Use TLS or non-TLS connection based on the tls parameter
+	if tls {
+		c, err = client.DialTLS(addr, nil)
+	} else {
+		c, err = client.Dial(addr)
+	}
+	
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", addr, err)
 	}
