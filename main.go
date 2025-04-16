@@ -42,5 +42,6 @@ func main() {
 		fmt.Printf("Subject: %s\n", email.Subject)
 		fmt.Printf("From: %v\n", email.From)
 		fmt.Printf("To: %v\n", email.To)
+		fmt.Printf("Body Preview: %s\n", email.Body) // Add body output
 	}
 }
