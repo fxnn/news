@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io" // Import io package for reading body
 	"log"
 	"time"
 
@@ -16,6 +17,7 @@ type Email struct {
 	Subject string
 	From    string
 	To      string
+	Body    string // Add Body field
 }
 
 // FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range.
@@ -76,8 +78,9 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	seqSet := new(imap.SeqSet)
 	seqSet.AddNum(uids...)
 
-	// Define what to fetch
-	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate}
+	// Define what to fetch - include the body section for TEXT part
+	section := &imap.BodySectionName{BodyPartName: imap.BodyPartName{Specifier: imap.TextSpecifier}}
+	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, section.FetchItem()}
 
 	// Fetch messages
 	messages := make(chan *imap.Message, 10)
@@ -85,15 +88,33 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	go func() {
 		done <- c.Fetch(seqSet, items, messages)
 	}()
-
 	var fetchedEmails []Email
 	for msg := range messages {
+		// Find the body section we requested
+		section := &imap.BodySectionName{BodyPartName: imap.BodyPartName{Specifier: imap.TextSpecifier}}
+		r := msg.GetBody(section)
+		if r == nil {
+			log.Printf("Server didn't return body section %v for UID %d", section, msg.Uid)
+			// Handle cases where the body might not be available or is not plain text
+			// For now, we'll just leave the body empty
+		}
+
+		// Read the body content
+		bodyBytes, err := io.ReadAll(r)
+		if err != nil && err != io.EOF { // EOF is expected
+			log.Printf("Error reading body for UID %d: %v", msg.Uid, err)
+			// Handle read error, maybe set body to an error message or leave empty
+		}
+		bodyContent := string(bodyBytes)
+
+
 		fetchedEmails = append(fetchedEmails, Email{
 			UID:     msg.Uid,
 			Date:    msg.InternalDate,
 			Subject: msg.Envelope.Subject,
 			From:    formatAddresses(msg.Envelope.From),
 			To:      formatAddresses(msg.Envelope.To),
+			Body:    bodyContent, // Populate the Body field
 		})
 	}
 

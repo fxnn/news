@@ -164,4 +164,11 @@ func TestFetchEmails(t *testing.T) {
 	if !strings.Contains(emails[0].From, "sender@example.com") {
 		t.Errorf("Expected From to contain 'sender@example.com', got '%s'", emails[0].From)
 	}
+
+	// Check body
+	expectedBody := "This is a recent test email."
+	// Note: IMAP servers might add extra CRLF, so we trim space for comparison
+	if strings.TrimSpace(emails[0].Body) != expectedBody {
+		t.Errorf("Expected body '%s', got '%s'", expectedBody, strings.TrimSpace(emails[0].Body))
+	}
 }
