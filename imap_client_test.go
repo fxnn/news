@@ -14,11 +14,12 @@ import (
 
 // TestMessage holds the data needed to create a test email message.
 type TestMessage struct {
-	Date    time.Time
-	Subject string
-	From    string // e.g., "Sender <sender@example.com>"
-	To      string // e.g., "Recipient <recipient@example.com>"
-	Body    string
+	Date      time.Time
+	Subject   string
+	From      string // e.g., "Sender <sender@example.com>"
+	To        string // e.g., "Recipient <recipient@example.com>"
+	BodyPlain string
+	BodyHTML  string
 }
 
 // setupMockIMAPServer creates and starts a mock IMAP server with the given test messages.
@@ -61,21 +62,46 @@ func setupMockIMAPServer(t *testing.T, messages []TestMessage) (host string, por
 	mbox.Messages = []*memory.Message{}
 
 	// Add all test messages to the mailbox
-	for i, msg := range messages {
-		// Format the email with headers and body
+	for i, msgData := range messages {
+		// Construct a multipart/alternative message
 		var fullMsg strings.Builder
-		fmt.Fprintf(&fullMsg, "From: %s\r\n", msg.From)
-		fmt.Fprintf(&fullMsg, "To: %s\r\n", msg.To)
-		fmt.Fprintf(&fullMsg, "Subject: %s\r\n", msg.Subject)
-		fmt.Fprintf(&fullMsg, "Date: %s\r\n", msg.Date.Format(time.RFC1123Z))
-		fmt.Fprintf(&fullMsg, "\r\n%s", msg.Body)
-		
+		boundary := "testboundary123"
+
+		// Headers
+		fmt.Fprintf(&fullMsg, "From: %s\r\n", msgData.From)
+		fmt.Fprintf(&fullMsg, "To: %s\r\n", msgData.To)
+		fmt.Fprintf(&fullMsg, "Subject: %s\r\n", msgData.Subject)
+		fmt.Fprintf(&fullMsg, "Date: %s\r\n", msgData.Date.Format(time.RFC1123Z))
+		fmt.Fprintf(&fullMsg, "MIME-Version: 1.0\r\n")
+		fmt.Fprintf(&fullMsg, "Content-Type: multipart/alternative; boundary=\"%s\"\r\n", boundary)
+		fmt.Fprintf(&fullMsg, "\r\n") // End of headers
+
+		// Plain text part
+		fmt.Fprintf(&fullMsg, "--%s\r\n", boundary)
+		fmt.Fprintf(&fullMsg, "Content-Type: text/plain; charset=utf-8\r\n")
+		fmt.Fprintf(&fullMsg, "Content-Transfer-Encoding: quoted-printable\r\n") // Use quoted-printable for safety
+		fmt.Fprintf(&fullMsg, "\r\n")
+		// Simple quoted-printable encoding (replace '=' with '=3D', can be improved)
+		encodedPlain := strings.ReplaceAll(msgData.BodyPlain, "=", "=3D")
+		fmt.Fprintf(&fullMsg, "%s\r\n", encodedPlain)
+
+		// HTML part
+		fmt.Fprintf(&fullMsg, "--%s\r\n", boundary)
+		fmt.Fprintf(&fullMsg, "Content-Type: text/html; charset=utf-8\r\n")
+		fmt.Fprintf(&fullMsg, "Content-Transfer-Encoding: quoted-printable\r\n")
+		fmt.Fprintf(&fullMsg, "\r\n")
+		encodedHTML := strings.ReplaceAll(msgData.BodyHTML, "=", "=3D")
+		fmt.Fprintf(&fullMsg, "%s\r\n", encodedHTML)
+
+		// End boundary
+		fmt.Fprintf(&fullMsg, "--%s--\r\n", boundary)
+
 		// Create the message in the mailbox
-		err = mbox.CreateMessage([]string{"\\Seen"}, msg.Date, strings.NewReader(fullMsg.String()))
+		err = mbox.CreateMessage([]string{"\\Seen"}, msgData.Date, strings.NewReader(fullMsg.String()))
 		if err != nil {
-			t.Fatalf("Failed to create message #%d (%s): %v", i+1, msg.Subject, err)
+			t.Fatalf("Failed to create message #%d (%s): %v", i+1, msgData.Subject, err)
 		}
-		t.Logf("Added message #%d: %s", i+1, msg.Subject)
+		t.Logf("Added message #%d: %s", i+1, msgData.Subject)
 	}
 
 	// Create a new server
@@ -109,22 +135,24 @@ func setupMockIMAPServer(t *testing.T, messages []TestMessage) (host string, por
 
 func TestFetchEmails(t *testing.T) {
 	// Define test messages
-	recentDate := time.Now().AddDate(0, 0, -3)
-	oldDate := time.Now().AddDate(0, 0, -10)
+	recentDate := time.Now().AddDate(0, 0, -3) // 3 days ago
+	oldDate := time.Now().AddDate(0, 0, -10)  // 10 days ago
 	testMessages := []TestMessage{
 		{
-			Date:    recentDate,
-			Subject: "Recent Test Email",
-			From:    "Sender <sender@example.com>",
-			To:      "Recipient <recipient@example.com>",
-			Body:    "This is a recent test email.",
+			Date:      recentDate,
+			Subject:   "Recent Test Email",
+			From:      "Sender <sender@example.com>",
+			To:        "Recipient <recipient@example.com>",
+			BodyPlain: "This is the plain text version.",
+			BodyHTML:  "<html><body><p>This is the <b>HTML</b> version.</p></body></html>",
 		},
 		{
-			Date:    oldDate,
-			Subject: "Old Test Email",
-			From:    "Sender <sender@example.com>",
-			To:      "Recipient <recipient@example.com>",
-			Body:    "This is an old test email.",
+			Date:      oldDate,
+			Subject:   "Old Test Email",
+			From:      "Another Sender <sender2@example.com>",
+			To:        "Another Recipient <recipient2@example.com>",
+			BodyPlain: "This is an old plain text email.",
+			BodyHTML:  "<html><body><p>Old HTML content.</p></body></html>",
 		},
 	}
 
@@ -165,9 +193,9 @@ func TestFetchEmails(t *testing.T) {
 		t.Errorf("Expected From to contain 'sender@example.com', got '%s'", emails[0].From)
 	}
 
-	// Check body
-	expectedBody := "This is a recent test email."
-	// Note: IMAP servers might add extra CRLF, so we trim space for comparison
+	// Check body (should be the plain text part)
+	expectedBody := "This is the plain text version."
+	// The parser should handle potential extra whitespace/encoding quirks
 	if strings.TrimSpace(emails[0].Body) != expectedBody {
 		t.Errorf("Expected body '%s', got '%s'", expectedBody, strings.TrimSpace(emails[0].Body))
 	}
