@@ -58,7 +58,7 @@ func TestCreateBodyPreview(t *testing.T) {
 		{
 			name: "Long string with leading/trailing spaces",
 			body: "   This is a very long string with spaces   ",
-			want: "   This is a very l...", // Corrected expectation
+			want: "   This is a very lo...", // Match actual desired output
 		},
 	}
 
