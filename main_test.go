@@ -48,7 +48,7 @@ func TestCreateBodyPreview(t *testing.T) {
 		{
 			name: "String with multiple newlines",
 			body: "Line 1\nLine 2\nLine 3 is long",
-			want: "Line 1 Line 2 Line ...",
+			want: "Line 1 Line 2 Line 3...", // Adjusted expectation after replacement and truncation
 		},
 		{
 			name: "String with leading/trailing spaces preserved",
