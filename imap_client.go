@@ -79,7 +79,7 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	seqSet.AddNum(uids...)
 
 	// Define what to fetch - try fetching the first body part (BODY[1]), hoping it's text/plain
-	section := &imap.BodySectionName{BodyPartName: imap.BodyPartName{Part: []int{1}}} // Request BODY[1]
+	section := &imap.BodySectionName{Part: []int{1}} // Request BODY[1] - Corrected field placement
 	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, section.FetchItem()}
 
 	// Fetch messages
@@ -90,8 +90,8 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	}()
 	var fetchedEmails []Email
 	for msg := range messages {
-		// Find the body section we requested (BODY[1])
-		section := &imap.BodySectionName{BodyPartName: imap.BodyPartName{Part: []int{1}}} // Match the requested section
+		// Define the section we requested (BODY[1]) to look it up in the message
+		section := &imap.BodySectionName{Part: []int{1}} // Match the requested section - Corrected field placement
 		r := msg.GetBody(section)
 		if r == nil {
 			log.Printf("Server didn't return body section BODY[1] for UID %d", msg.Uid)
