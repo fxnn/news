@@ -79,8 +79,10 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	seqSet.AddNum(uids...)
 
 	// Define what to fetch - try fetching the first body part (BODY[1]), hoping it's text/plain
-	section := &imap.BodySectionName{Part: []int{1}} // Request BODY[1] - Corrected field placement
-	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, section.FetchItem()}
+	// Define the section struct needed for GetBody later
+	sectionForGetBody := &imap.BodySectionName{Part: []int{1}}
+	// Manually specify the fetch item string for BODY[1] to avoid potential struct issues during fetch setup
+	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, imap.FetchItem("BODY[1]")}
 
 	// Fetch messages
 	messages := make(chan *imap.Message, 10)
@@ -91,8 +93,8 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	var fetchedEmails []Email
 	for msg := range messages {
 		// Define the section we requested (BODY[1]) to look it up in the message
-		section := &imap.BodySectionName{Part: []int{1}} // Match the requested section - Corrected field placement
-		r := msg.GetBody(section)
+		sectionForGetBody := &imap.BodySectionName{Part: []int{1}} // Use the same section definition as before fetch
+		r := msg.GetBody(sectionForGetBody)
 		if r == nil {
 			log.Printf("Server didn't return body section BODY[1] for UID %d", msg.Uid)
 			// Handle cases where the body might not be available or is not plain text
