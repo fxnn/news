@@ -44,12 +44,19 @@ func main() {
 		fmt.Printf("From: %v\n", email.From)
 		fmt.Printf("To: %v\n", email.To)
 
-		// Create body preview
-		preview := strings.ReplaceAll(email.Body, "\n", " ") // Replace newlines with spaces
-		preview = strings.ReplaceAll(preview, "\r", "")      // Remove carriage returns just in case
-		if len(preview) > 20 {
-			preview = preview[:20] + "..."
-		}
+		// Create and print body preview
+		preview := createBodyPreview(email.Body)
 		fmt.Printf("Body Preview: %s\n", preview)
 	}
+}
+
+// createBodyPreview generates a short, single-line preview of an email body.
+// It replaces newlines with spaces and truncates to 20 characters, adding ellipsis if needed.
+func createBodyPreview(body string) string {
+	preview := strings.ReplaceAll(body, "\n", " ") // Replace newlines with spaces
+	preview = strings.ReplaceAll(preview, "\r", "") // Remove carriage returns just in case
+	if len(preview) > 20 {
+		preview = preview[:20] + "..."
+	}
+	return preview
 }
