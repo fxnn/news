@@ -9,7 +9,7 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message/mail"
-	"github.com/jaytaylor/html2text" // Import html2text for HTML conversion
+	// (Dropped html2text import; we’ll just return raw HTML when no text/plain part is present.)
 )
 
 // Email represents the essential metadata of an email.
@@ -155,8 +155,8 @@ func formatAddresses(addresses []*imap.Address) string {
 
  
 // extractPlainText walks through the MIME parts of an email body and extracts
-// the plain text content. It prefers text/plain, but falls back to converting
-// text/html if necessary.
+// the plain text content. It prefers "text/plain"; if that’s missing, it
+// returns the raw HTML body.
 func extractPlainText(mr *mail.Reader, uid uint32) string {
 	var plainBody string
 	var htmlBody string
@@ -200,16 +200,8 @@ func extractPlainText(mr *mail.Reader, uid uint32) string {
 		return plainBody
 	}
 	if htmlBody != "" {
-		// time the html2text conversion itself
-		t0 := time.Now()
-		convertedText, err := html2text.FromString(htmlBody, html2text.Options{PrettyTables: true})
-		dur := time.Since(t0)
-		if err != nil {
-			log.Printf("UID %d: html->text conversion failed (%s): %v", uid, dur, err)
-			return htmlBody // Return original HTML on conversion error
-		}
-		log.Printf("UID %d: html->text conversion took %s", uid, dur)
-		return convertedText
+		// No plain text found, return the raw HTML instead of converting
+		return htmlBody
 	}
 	return "" // No suitable body found
 }
