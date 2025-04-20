@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/emersion/go-imap"
