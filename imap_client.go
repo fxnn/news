@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime" // Import mime package for header parsing
 	"strings"
 	"time"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
-	"github.com/emersion/go-message" // Import go-message for MIME parsing
 	"github.com/emersion/go-message/mail"
 	"github.com/jaytaylor/html2text" // Import html2text for HTML conversion
 )
@@ -142,77 +140,59 @@ func formatAddresses(addresses []*imap.Address) string {
 	return fmt.Sprintf("%s@%s", addr.MailboxName, addr.HostName)
 }
 
+ 
 // extractPlainText walks through the MIME parts of an email body and extracts
 // the plain text content. It prefers text/plain, but falls back to converting
 // text/html if necessary.
 func extractPlainText(mr *mail.Reader, uid uint32) string {
-	plainBody := ""
-	htmlBody := ""
+	var plainBody string
+	var htmlBody string
 
-	// Recursively walk through the MIME parts
-	var walkPart func(p *message.Entity)
-	walkPart = func(p *message.Entity) {
-		mediaType, params, err := mime.ParseMediaType(p.Header.Get("Content-Type"))
+	for {
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
-			// Ignore parts with invalid Content-Type
-			return
+			log.Printf("Error reading next part for UID %d: %v", uid, err)
+			continue
 		}
 
-		if strings.HasPrefix(mediaType, "multipart/") {
-			// This is a multipart entity, walk its children
-			pr := p.MultipartReader()
-			if pr == nil {
-				return // Should not happen for multipart/*
-			}
-			for {
-				subPart, err := pr.NextPart()
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					log.Printf("Error reading sub-part for UID %d: %v", uid, err)
-					continue
-				}
-				walkPart(subPart) // Recurse
-			}
-		} else if mediaType == "text/plain" && plainBody == "" { // Prefer plain text, take the first one found
-			bodyBytes, err := io.ReadAll(p.Body)
+		switch h := part.Header.(type) {
+		case *mail.InlineHeader:
+			ctype, _, err := h.ContentType()
 			if err != nil {
-				log.Printf("Error reading text/plain part for UID %d: %v", uid, err)
-			} else {
-				// Consider charset if specified, default to UTF-8
-				charset := params["charset"]
-				if charset != "" && !strings.EqualFold(charset, "utf-8") {
-					// TODO: Add charset conversion if needed, for now assume UTF-8 or compatible
-					log.Printf("UID %d: Found text/plain with charset %s, attempting UTF-8 read", uid, charset)
-				}
+				log.Printf("Error parsing content type for UID %d: %v", uid, err)
+				continue
+			}
+			bodyBytes, err := io.ReadAll(part.Body)
+			if err != nil {
+				log.Printf("Error reading body for UID %d: %v", uid, err)
+				continue
+			}
+			if ctype == "text/plain" && plainBody == "" {
 				plainBody = string(bodyBytes)
-			}
-		} else if mediaType == "text/html" && htmlBody == "" { // Store the first HTML part found as fallback
-			bodyBytes, err := io.ReadAll(p.Body)
-			if err != nil {
-				log.Printf("Error reading text/html part for UID %d: %v", uid, err)
-			} else {
+			} else if ctype == "text/html" && htmlBody == "" {
 				htmlBody = string(bodyBytes)
 			}
+		case *mail.AttachmentHeader:
+			// Skip attachments
+			continue
+		default:
+			// Other parts are ignored
 		}
 	}
 
-	// Start walking from the main message entity
-	walkPart(mr.Entity)
-
-	// Return plain text if found, otherwise convert HTML
 	if plainBody != "" {
 		return plainBody
-	} else if htmlBody != "" {
+	}
+	if htmlBody != "" {
 		convertedText, err := html2text.FromString(htmlBody, html2text.Options{PrettyTables: true})
 		if err != nil {
 			log.Printf("Error converting HTML to text for UID %d: %v", uid, err)
-			return htmlBody // Return raw HTML on conversion error
+			return htmlBody
 		}
 		return convertedText
 	}
-
-	// If neither plain nor HTML found (or errors occurred), return empty
 	return ""
 }
