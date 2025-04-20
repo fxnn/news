@@ -84,14 +84,25 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	section := &imap.BodySectionName{} // Empty section name means BODY[]
 	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, section.FetchItem()}
 
+	// How many we expect to process
+	total := len(uids)
+	log.Printf("About to fetch and process %d messages (since %s)", total, since.Format(time.RFC3339))
+
 	// Fetch messages
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
 		done <- c.Fetch(seqSet, items, messages)
 	}()
+
 	var fetchedEmails []Email
+	count := 0
+
+	// As each msg comes back, time the work and bump a counter
 	for msg := range messages {
+		count++
+		start := time.Now()
+
 		bodyContent := "" // Default to empty body
 
 		// Get the BODY[] literal reader
@@ -102,12 +113,12 @@ func FetchEmails(server string, port int, username, password, folder string, day
 		} else {
 			// Parse the MIME message body
 			mr, err := mail.CreateReader(r)
-			if err != nil {
-				log.Printf("Error creating mail reader for UID %d: %v", msg.Uid, err)
-			} else {
+			if err == nil {
 				// Extract plain text or convert HTML
 				bodyContent = extractPlainText(mr, msg.Uid)
 				mr.Close() // Close the reader
+			} else {
+				log.Printf("UID %d: error creating mail.Reader: %v", msg.Uid, err)
 			}
 		}
 
@@ -119,6 +130,9 @@ func FetchEmails(server string, port int, username, password, folder string, day
 			To:      formatAddresses(msg.Envelope.To),
 			Body:    bodyContent, // Populate the Body field
 		})
+
+		// Log progress & how long we spent on this message
+		log.Printf("Processed %d/%d (UID %d) in %s", count, total, msg.Uid, time.Since(start))
 	}
 
 	if err := <-done; err != nil {
@@ -186,12 +200,16 @@ func extractPlainText(mr *mail.Reader, uid uint32) string {
 		return plainBody
 	}
 	if htmlBody != "" {
+		// time the html2text conversion itself
+		t0 := time.Now()
 		convertedText, err := html2text.FromString(htmlBody, html2text.Options{PrettyTables: true})
+		dur := time.Since(t0)
 		if err != nil {
-			log.Printf("Error converting HTML to text for UID %d: %v", uid, err)
-			return htmlBody
+			log.Printf("UID %d: html->text conversion failed (%s): %v", uid, dur, err)
+			return htmlBody // Return original HTML on conversion error
 		}
+		log.Printf("UID %d: html->text conversion took %s", uid, dur)
 		return convertedText
 	}
-	return ""
+	return "" // No suitable body found
 }
