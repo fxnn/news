@@ -1,0 +1,4 @@
+- When you do a change, start with the tests. Add a new test case, or change an existing one.
+- Only change production code to fix a red test (TDD).
+- Always run the tests after every step, to make sure we have a red test resp. we actually fixed the test.
+- Don't leave commented-out code in the files. No dead code.
