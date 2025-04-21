@@ -58,8 +58,8 @@ func main() {
 	for i := range emails { // Use index to modify the slice element directly
 		email := &emails[i] // Get a pointer to the email for modification
 
-		// Attempt to summarize the body
-		summary, err := Summarize(email.Body)
+		// Attempt to summarize the body using the chosen summarizer instance
+		summary, err := summarizer.Summarize(email.Body) // Use the summarizer instance
 		if err != nil {
 			// Log the summarization error but continue processing other emails
 			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, err)
