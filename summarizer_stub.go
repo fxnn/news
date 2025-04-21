@@ -7,12 +7,12 @@ type Summarizer interface {
 	Summarize(text string) (string, error)
 }
 
-// llmStub implements Summarizer with a naive, non‑LLM placeholder.
-type llmStub struct{}
+// summarizerStub implements Summarizer with a naive, non‑LLM placeholder.
+type summarizerStub struct{}
 
 // Summarize returns the first sentence (up to the first '.') or
 // truncates at 100 chars, never empty if input is non‑empty.
-func (c *llmStub) Summarize(text string) (string, error) {
+func (c *summarizerStub) Summarize(text string) (string, error) {
 	if text == "" {
 		return "", nil
 	}
