@@ -38,18 +38,18 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	// Define the custom prompt template
 	// Note: The input variable must be "text" for chains.NewStuffDocuments by default.
 	prompt := prompts.NewPromptTemplate(
-		`Write a concise summary of the following text.
+		`Create a very brief teaser highlighting the key insights from the following text.
 Follow these instructions strictly:
 - Use only prose and complete sentences.
 - Do not use bullet points or lists.
 - Do not mention the format of the original text (e.g., "This is an HTML email").
-- Do not include metadata like dates unless they are part of the core narrative.
-- Focus solely on extracting the key facts and stories presented in the text.
+- Do not include any metadata like dates or user names unless they are essential to the core insight.
+- Focus solely on the most important facts or stories. Keep it extremely short.
 
 Text:
 "{{.text}}"
 
-CONCISE SUMMARY:`,
+BRIEF TEASER:`,
 		[]string{"text"},
 	)
 
