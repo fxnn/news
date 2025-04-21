@@ -90,6 +90,8 @@ func TestSummarizeImplementations(t *testing.T) {
 			// if tt.checkEmpty && len(got) >= len(tt.text) && len(tt.text) > 50 { // Only check for reasonably long texts
 			// 	t.Errorf("Summarize() summary length %d >= original length %d for text: %q", len(got), len(tt.text), tt.text)
 			// }
-		})
-	}
+				}) // End of t.Run for test case
+			} // End of loop over test cases
+		}) // End of t.Run for summarizer type
+	} // End of loop over summarizers
 }
