@@ -28,5 +28,5 @@ func (c *llmStub) Summarize(text string) (string, error) {
 
 // NewStubSummarizer creates a new instance of the stub summarizer.
 func NewStubSummarizer() Summarizer {
-	return &llmStub{}
+	return &summarizerStub{}
 }
