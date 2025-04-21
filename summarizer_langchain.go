@@ -59,6 +59,10 @@ CONCISE SUMMARY:`,
 	// Create the StuffDocuments chain using the LLMChain
 	// This chain knows how to handle input documents and use the LLMChain
 	stuffChain := chains.NewStuffDocuments(llmChain)
+	// Ensure the variable name used by StuffDocuments matches the LLMChain's prompt input variable.
+	// Although "text" is the default, we set it explicitly for clarity and robustness.
+	stuffChain.DocumentVariableName = "text"
+
 
 	return &langChainSummarizer{chain: stuffChain}, nil
 }
