@@ -47,10 +47,10 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 	}
 
 	// Use chains.Call which expects and returns map[string]any
-	// The input key for summarization chains is typically "text"
-	// The output key is typically "text" as well
+	// The input key for the stuff summarization chain is "input_documents"
+	// The output key is "text"
 	result, err := chains.Call(context.Background(), s.chain, map[string]any{
-		"text": text, // Use "text" as the input key
+		"input_documents": []string{text}, // Use "input_documents" as the key, expecting a slice of strings
 	})
 	if err != nil {
 		return "", fmt.Errorf("summarization chain call failed: %w", err)
