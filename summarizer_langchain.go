@@ -11,7 +11,8 @@ import (
 
 // langChainSummarizer implements our Summarizer interface
 type langChainSummarizer struct {
-	chain *chains.SummarizeChain
+	// Use the generic chains.Chain interface
+	chain chains.Chain
 }
 
 // NewLangChainSummarizer constructs a Summarizer backed by OpenAI via langchaingo.
@@ -22,14 +23,18 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	}
 
 	// Create an OpenAI LLM client
-	llm := openai.New(
-		openai.WithAPIKey(apiKey),
+	// Note: openai.New returns (llm, error)
+	llm, err := openai.New(
+		openai.WithToken(apiKey), // Use WithToken for the API key
 		// you can also tune Model, Temperature, MaxTokens, etc:
 		// openai.WithModel("gpt-4"),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
+	}
 
-	// Wrap it in a SummarizeChain
-	sumChain := chains.NewSummarizeChain(llm)
+	// Use LoadStuffSummarizationChain to create the chain
+	sumChain := chains.LoadStuffSummarizationChain(llm)
 
 	return &langChainSummarizer{chain: sumChain}, nil
 }
@@ -41,17 +46,22 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 		return "", nil
 	}
 
-	out, err := s.chain.Run(context.Background(), map[string]any{
-		"input": text,
+	// Use chains.Call which expects and returns map[string]any
+	// The input key for summarization chains is typically "text"
+	// The output key is typically "text" as well
+	result, err := chains.Call(context.Background(), s.chain, map[string]any{
+		"text": text, // Use "text" as the input key
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("summarization chain call failed: %w", err)
 	}
 
-	// The chain returns an interface{}, but we know it's a string.
-	summary, ok := out.(string)
+	// Extract the summary string from the result map
+	summary, ok := result["text"].(string)
 	if !ok {
-		return "", fmt.Errorf("unexpected SummarizeChain output type: %T", out)
+		// Log the actual result for debugging if the type assertion fails
+		fmt.Printf("Debug: Unexpected result type or key. Result map: %v\n", result)
+		return "", fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T", result["text"])
 	}
 	return summary, nil
 }
