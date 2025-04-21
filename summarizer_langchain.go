@@ -91,12 +91,12 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 	}
 
 	// Extract the summary string from the result map
-	// The default output key for NewStuffDocuments is "output_text".
-	summary, ok := result["output_text"].(string)
+	// The output key from the underlying LLMChain is "text".
+	summary, ok := result["text"].(string)
 	if !ok {
 		// Log the actual result for debugging if the type assertion fails
 		fmt.Printf("Debug: Unexpected result type or key. Result map: %v\n", result)
-		return "", fmt.Errorf("unexpected output type from summarization chain: expected string under key 'output_text', got %T", result["output_text"])
+		return "", fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T", result["text"])
 	}
 	return summary, nil
 }
