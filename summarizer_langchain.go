@@ -28,7 +28,7 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	llm, err := openai.New(
 		openai.WithToken(apiKey), // Use WithToken for the API key
 		// you can also tune Model, Temperature, MaxTokens, etc:
-		// openai.WithModel("gpt-4"),
+		openai.WithModel("gpt-4o-mini"), // Specify the desired model
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
