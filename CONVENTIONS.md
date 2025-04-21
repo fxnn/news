@@ -2,3 +2,4 @@
 - Only change production code to fix a red test (TDD).
 - Always run the tests after every step, to make sure we have a red test resp. we actually fixed the test.
 - Don't leave commented-out code in the files. No dead code.
+- Extract code into functions often. A function should do one thing. If you need to separate different aspects using comments, split it up.
