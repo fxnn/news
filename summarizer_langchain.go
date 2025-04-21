@@ -70,10 +70,3 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 	}
 	return summary, nil
 }
-
-func init() {
-	// If we can build the LangChain summarizer, swap it in for the stub.
-	if lc, err := NewLangChainSummarizer(); err == nil {
-		defaultLLM = lc
-	}
-}

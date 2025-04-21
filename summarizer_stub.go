@@ -26,6 +26,7 @@ func (c *llmStub) Summarize(text string) (string, error) {
 	return text, nil
 }
 
-// defaultLLM is the package‑level stub that Summarize() will call.
-// We initialize it with our stub implementation.
-var defaultLLM Summarizer = &llmStub{}
+// NewStubSummarizer creates a new instance of the stub summarizer.
+func NewStubSummarizer() Summarizer {
+	return &llmStub{}
+}

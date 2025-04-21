@@ -15,6 +15,7 @@ func main() {
 	password := flag.String("password", "", "Email password (required)")
 	folder := flag.String("folder", "INBOX", "Email folder to search")
 	days := flag.Int("days", 7, "Number of days to look back")
+	summarizerType := flag.String("summarizer", "stub", "Summarizer type ('stub' or 'langchain')")
 	flag.Parse()
 
 	// Validate required flags

@@ -1,7 +1,5 @@
 package main
 
-// Summarize generates a summary for the given text using the default LLM client.
-func Summarize(text string) (string, error) {
-	// Delegate to the defaultLLM implementation (currently the stub).
-	return defaultLLM.Summarize(text)
-}
+// This file now only contains comments or potentially shared types/constants
+// related to summarization if needed in the future. The global Summarize function
+// has been removed in favor of explicit instantiation in main.go.
