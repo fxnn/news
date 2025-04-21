@@ -119,7 +119,7 @@ func FetchEmails(server string, port int, username, password, folder string, day
 			From:    formatAddresses(msg.Envelope.From),
 			To:      formatAddresses(msg.Envelope.To),
 			Body:    bodyContent, // Populate the Body field
-			Summary: "",          // Placeholder for summary
+			// Summary will be populated later
 		})
 
 		// Log progress & how long we spent on this message

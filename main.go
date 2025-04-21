@@ -36,7 +36,19 @@ func main() {
 	}
 
 	fmt.Printf("Fetched %d emails:\n", len(emails))
-	for _, email := range emails {
+	for i := range emails { // Use index to modify the slice element directly
+		email := &emails[i] // Get a pointer to the email for modification
+
+		// Attempt to summarize the body
+		summary, err := Summarize(email.Body)
+		if err != nil {
+			// Log the summarization error but continue processing other emails
+			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, err)
+			email.Summary = "[Summarization failed]" // Assign placeholder on error
+		} else {
+			email.Summary = summary // Assign the generated summary
+		}
+
 		fmt.Printf("\n=== Message ===\n")
 		fmt.Printf("UID: %d\n", email.UID)
 		fmt.Printf("Date: %v\n", email.Date)
