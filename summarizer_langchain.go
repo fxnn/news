@@ -33,8 +33,8 @@ func NewLangChainSummarizer() (Summarizer, error) {
 		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
 	}
 
-	// Use LoadStuffSummarizationChain to create the chain
-	sumChain := chains.LoadStuffSummarizationChain(llm)
+	// Use LoadStuffSummarization to create the chain
+	sumChain := chains.LoadStuffSummarization(llm)
 
 	return &langChainSummarizer{chain: sumChain}, nil
 }
