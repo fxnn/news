@@ -24,6 +24,24 @@ func main() {
 		log.Fatal("server, username, and password are required")
 	}
 
+	// --- Initialize Summarizer ---
+	var summarizer Summarizer // Declare the summarizer variable
+	var err error             // Declare err for NewLangChainSummarizer
+	switch *summarizerType {
+	case "stub":
+		summarizer = NewStubSummarizer()
+		log.Println("Using stub summarizer.")
+	case "langchain":
+		summarizer, err = NewLangChainSummarizer()
+		if err != nil {
+			log.Fatalf("Failed to initialize LangChain summarizer: %v", err)
+		}
+		log.Println("Using LangChain summarizer.")
+	default:
+		log.Fatalf("Invalid summarizer type: %s. Choose 'stub' or 'langchain'.", *summarizerType)
+	}
+	// --- End Initialize Summarizer ---
+
 	// Fetch emails using the IMAP client (with TLS)
 	emails, err := FetchEmails(*server, *port, *username, *password, *folder, *days, true)
 	if err != nil {
