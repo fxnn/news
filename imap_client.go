@@ -76,7 +76,6 @@ func FetchEmails(server string, port int, username, password, folder string, day
 
 	// How many we expect to process
 	total := len(uids)
-	log.Printf("About to fetch and process %d messages (since %s)", total, since.Format(time.RFC3339))
 
 	// Fetch messages
 	messages := make(chan *imap.Message, 10)
@@ -121,9 +120,6 @@ func FetchEmails(server string, port int, username, password, folder string, day
 			Body:    bodyContent, // Populate the Body field
 			// Summary will be populated later
 		})
-
-		// Log progress & how long we spent on this message
-		log.Printf("Processed %d/%d (UID %d) in %s", count, total, msg.Uid, time.Since(start))
 	}
 
 	if err := <-done; err != nil {
