@@ -45,6 +45,7 @@ Follow these instructions strictly:
 - Do not mention the format of the original text (e.g., "This is an HTML email").
 - Do not include any metadata like dates or user names unless they are essential to the core insight.
 - Focus solely on the most important facts or stories. Keep it extremely short.
+- Write the teaser in the same language as the original text.
 
 Text:
 "{{.text}}"
