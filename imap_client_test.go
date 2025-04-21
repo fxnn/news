@@ -199,4 +199,9 @@ func TestFetchEmails(t *testing.T) {
 	if strings.TrimSpace(emails[0].Body) != expectedBody {
 		t.Errorf("Expected body '%s', got '%s'", expectedBody, strings.TrimSpace(emails[0].Body))
 	}
+
+	// Check summary (should be empty for now)
+	if emails[0].Summary != "" {
+		t.Errorf("Expected empty summary, got '%s'", emails[0].Summary)
+	}
 }

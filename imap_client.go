@@ -20,6 +20,7 @@ type Email struct {
 	From    string
 	To      string
 	Body    string // Add Body field
+	Summary string // Add Summary field
 }
 
 // FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range.
@@ -129,6 +130,7 @@ func FetchEmails(server string, port int, username, password, folder string, day
 			From:    formatAddresses(msg.Envelope.From),
 			To:      formatAddresses(msg.Envelope.To),
 			Body:    bodyContent, // Populate the Body field
+			Summary: "",          // Placeholder for summary
 		})
 
 		// Log progress & how long we spent on this message

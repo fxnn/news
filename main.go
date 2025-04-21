@@ -47,6 +47,7 @@ func main() {
 		// Create and print body preview
 		preview := createBodyPreview(email.Body)
 		fmt.Printf("Body Preview: %s\n", preview)
+		fmt.Printf("Summary: %s\n", email.Summary) // Print the summary
 	}
 }
 
