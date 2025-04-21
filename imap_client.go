@@ -12,17 +12,6 @@ import (
 	// (Dropped html2text import; we’ll just return raw HTML when no text/plain part is present.)
 )
 
-// Email represents the essential metadata of an email.
-type Email struct {
-	UID     uint32
-	Date    time.Time
-	Subject string
-	From    string
-	To      string
-	Body    string // Add Body field
-	Summary string // Add Summary field
-}
-
 // FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range.
 func FetchEmails(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
 	// Connect to server
