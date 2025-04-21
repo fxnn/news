@@ -74,9 +74,6 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	section := &imap.BodySectionName{} // Empty section name means BODY[]
 	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchInternalDate, section.FetchItem()}
 
-	// How many we expect to process
-	total := len(uids)
-
 	// Fetch messages
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
@@ -90,7 +87,6 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	// As each msg comes back, time the work and bump a counter
 	for msg := range messages {
 		count++
-		start := time.Now()
 
 		bodyContent := "" // Default to empty body
 
