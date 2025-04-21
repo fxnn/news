@@ -7,6 +7,7 @@ import (
 
 	"github.com/tmc/langchaingo/chains"
 	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/schema"
 )
 
 // langChainSummarizer implements our Summarizer interface
@@ -48,9 +49,13 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 
 	// Use chains.Call which expects and returns map[string]any
 	// The input key for the stuff summarization chain is "input_documents"
+	// It expects a slice of schema.Document objects.
 	// The output key is "text"
+	docs := []schema.Document{
+		{PageContent: text},
+	}
 	result, err := chains.Call(context.Background(), s.chain, map[string]any{
-		"input_documents": []string{text}, // Use "input_documents" as the key, expecting a slice of strings
+		"input_documents": docs, // Pass the slice of schema.Document
 	})
 	if err != nil {
 		return "", fmt.Errorf("summarization chain call failed: %w", err)
