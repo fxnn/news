@@ -1,13 +1,15 @@
 package main
 
 import (
+	"os"
 	"testing"
 )
 
-func TestSummarize(t *testing.T) {
-	tests := []struct {
-		name    string
-		text    string
+func TestSummarizeImplementations(t *testing.T) {
+	// Define the test cases once
+	testCases := []struct {
+		name       string
+		text       string
 		want    string
 		// We don't check for specific want string because LLM output is non-deterministic
 		wantErr    error
@@ -33,15 +35,35 @@ func TestSummarize(t *testing.T) {
 			wantErr:    nil,
 			checkEmpty: true, // Expect a non-empty summary even for short text
 		},
-		// Add more test cases here if needed, e.g., for different languages, formats, error conditions.
+		// Add more test cases here if needed
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := Summarize(tt.text)
+	// Define the summarizers to test
+	summarizers := map[string]Summarizer{
+		"Stub": NewStubSummarizer(),
+	}
 
-			// Check for unexpected errors
-			if err != tt.wantErr {
+	// Attempt to add LangChain summarizer, skip if API key is missing
+	lcSummarizer, err := NewLangChainSummarizer()
+	if err == nil {
+		summarizers["LangChain"] = lcSummarizer
+	} else if os.Getenv("OPENAI_API_KEY") == "" {
+		t.Log("Skipping LangChain summarizer tests: OPENAI_API_KEY not set")
+	} else {
+		// API key is set, but creation failed for another reason
+		t.Fatalf("Failed to create LangChain summarizer even though OPENAI_API_KEY is set: %v", err)
+	}
+
+	// Run tests for each summarizer
+	for sName, summarizer := range summarizers {
+		t.Run(sName, func(t *testing.T) {
+			// Run each test case for the current summarizer
+			for _, tt := range testCases {
+				t.Run(tt.name, func(t *testing.T) {
+					got, err := summarizer.Summarize(tt.text) // Call the method on the instance
+
+					// Check for unexpected errors
+					if err != tt.wantErr {
 				// If we expected a specific error (like ErrSummarizationNotImplemented in the future)
 				// and got a different one, fail.
 				// If we expected no error (wantErr == nil) and got one, fail.
