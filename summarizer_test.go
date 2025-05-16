@@ -8,36 +8,99 @@ import (
 func TestSummarizeImplementations(t *testing.T) {
 	// Define the test cases once
 	testCases := []struct {
-		name string
-		text string
-		// For stub, we can check wantStories. For LLM, we check checkNonEmptyStories and basic structure.
-		wantStories         []Story
-		wantErr             error
-		checkNonEmptyStories bool // Flag to check if the output slice of stories should be non-empty
+		name             string
+		text             string
+		wantStoriesStub  []Story // Precise expectation for Stub. Length indicates expected story count.
+		wantErr          error
+		expectAnyStory   bool    // If true, expect len(got) > 0. If false, expect len(got) == 0 or got == nil.
 	}{
 		{
-			name:                "Empty text",
-			text:                "",
-			wantStories:         nil, // Or []Story{}
-			wantErr:             nil,
-			checkNonEmptyStories: false, // Expect empty slice of stories for empty text
+			name:            "Empty text",
+			text:            "",
+			wantStoriesStub: nil,
+			wantErr:         nil,
+			expectAnyStory:  false,
 		},
 		{
-			name: "Normal text - single story expected (for stub)",
+			name: "Plain text - Single story, with URL",
 			text: "This is a reasonably long email body that requires summarization. " +
-				"It discusses the project status, upcoming deadlines, and action items for the team. " +
-				"We need to ensure the summary captures the key points without being too verbose. More info at http://example.com/project-status",
-			// wantStories will be specific for the stub, for LLM we just check if it's non-empty and fields are populated
-			wantErr:             nil,
-			checkNonEmptyStories: true, // Expect a non-empty slice of stories
+				"It discusses the project status. More info at http://example.com/project-status.",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "This is a reasonably long email body that requires summarization.",
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
 		},
 		{
-			name:                "Short text - single story expected (for stub)",
-			text:                "OK. Read more http://example.com/ok",
-			wantErr:             nil,
-			checkNonEmptyStories: true, // Expect a non-empty slice of stories even for short text
+			name: "Plain text - Short story, with URL",
+			text: "OK. Read more http://example.com/ok.",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "OK.",
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
 		},
-		// Add more test cases here if needed
+		{
+			name: "Plain text - Single story, no URL",
+			text: "This is a simple statement. It stands alone.",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "This is a simple statement.",
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
+		},
+		{
+			name: "HTML text - Single story, with URL",
+			text: "<p>This is <b>HTML</b> content. Learn more <a href='http://example.com/html-story'>here</a>.</p>",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "<p>This is <b>HTML</b> content.", // Stub takes first sentence of raw HTML
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
+		},
+		{
+			name: "HTML text - Single story, no URL",
+			text: "<div><p>Just a piece of HTML. Indeed.</p></div>",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "<div><p>Just a piece of HTML.", // Stub takes first sentence of raw HTML
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
+		},
+		{
+			name: "Plain text - Multiple segments (potential for multiple stories)",
+			text: "First topic is about apples. They are good. Second topic is about bananas. They are yellow. Find out more at http://fruits.com.",
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "First topic is about apples.",
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true, // LLM might produce >1 story, or 1 combined story. We check for at least one.
+		},
+		{
+			name: "HTML text - Multiple segments (potential for multiple stories)",
+			text: "<h1>Topic One</h1><p>Content for topic one. <a href='http://example.com/one'>Link1</a></p><h2>Topic Two</h2><p>Content for topic two. No link here.</p>",
+			// Stub will take the first sentence from the raw HTML string.
+			// The first '.' appears after "Content for topic one."
+			wantStoriesStub: []Story{{
+				Headline: "Summary",
+				Teaser:   "<h1>Topic One</h1><p>Content for topic one.",
+				URL:      "",
+			}},
+			wantErr:        nil,
+			expectAnyStory: true,
+		},
 	}
 
 	// Define the summarizers to test
@@ -78,43 +141,55 @@ func TestSummarizeImplementations(t *testing.T) {
 						return
 					}
 
-					// Check if the slice of stories should be non-empty
-					if tt.checkNonEmptyStories {
+					// General story expectation check (applies to all summarizers)
+					if tt.expectAnyStory {
 						if got == nil || len(got) == 0 {
 							t.Errorf("Summarize() got an empty or nil slice of stories, want non-empty for text: %q", tt.text)
 							return // Avoid further checks on nil/empty slice
 						}
-						// For non-empty, also check if stories have populated fields (basic check for LLM)
+						// Basic checks for all stories returned (headline, teaser non-empty)
 						for i, story := range got {
 							if story.Headline == "" {
-								t.Errorf("Summarize() story %d has empty Headline for text: %q", i, tt.text)
+								t.Errorf("Summarize() story %d has empty Headline for text: %q (Summarizer: %s)", i, tt.text, sName)
 							}
 							if story.Teaser == "" {
-								t.Errorf("Summarize() story %d has empty Teaser for text: %q", i, tt.text)
+								t.Errorf("Summarize() story %d has empty Teaser for text: %q (Summarizer: %s)", i, tt.text, sName)
 							}
-							// URL can sometimes be empty if not found, so this check might be too strict for all cases.
-							// For now, let's assume a URL is usually expected if a story is present.
-							// if story.URL == "" {
-							//  t.Errorf("Summarize() story %d has empty URL for text: %q", i, tt.text)
-							// }
+							// Story.URL is not reliably populated by current LLM prompt or stub,
+							// so a generic check for non-empty URL is too strict here.
+							// Specific check for stub's empty URL is done below.
+						}
+					} else { // !tt.expectAnyStory (i.e., expect no stories)
+						if got != nil && len(got) > 0 {
+							t.Errorf("Summarize() got %v, want empty or nil slice of stories for text: %q (Summarizer: %s)", got, tt.text, sName)
 						}
 					}
 
-					// Check if the slice of stories should be empty
-					if !tt.checkNonEmptyStories && (got != nil && len(got) > 0) {
-						t.Errorf("Summarize() got = %v, want empty or nil slice of stories for empty text", got)
-					}
-
-					// Specific checks for stub - this part will need actual implementation of stub to match
-					if sName == "Stub" && tt.wantStories != nil {
-						// This is a placeholder for more detailed comparison if needed for the stub.
-						// For now, the length check and non-empty field checks above cover a lot.
-						// We might compare tt.wantStories with `got` directly if stub provides deterministic output.
-						if len(got) != len(tt.wantStories) {
-							t.Errorf("Summarize() for Stub, got %d stories, want %d stories for text: %q", len(got), len(tt.wantStories), tt.text)
+					// Specific checks for Stub (number of stories and content)
+					if sName == "Stub" {
+						expectedNumStoriesStub := 0
+						if tt.wantStoriesStub != nil {
+							expectedNumStoriesStub = len(tt.wantStoriesStub)
 						}
-						// Further checks for content can be added here if tt.wantStories is defined for the stub.
+
+						if len(got) != expectedNumStoriesStub {
+							t.Errorf("Summarize() for Stub, got %d stories, want %d stories for text: %q. Got: %v, Want: %v", len(got), expectedNumStoriesStub, tt.text, got, tt.wantStoriesStub)
+						} else if tt.wantStoriesStub != nil { // Lengths match, now check content if expected stories are defined
+							for i := range got {
+								if got[i].Headline != tt.wantStoriesStub[i].Headline {
+									t.Errorf("Summarize() for Stub, story %d Headline got %q, want %q for text: %q", i, got[i].Headline, tt.wantStoriesStub[i].Headline, tt.text)
+								}
+								if got[i].Teaser != tt.wantStoriesStub[i].Teaser {
+									t.Errorf("Summarize() for Stub, story %d Teaser got %q, want %q for text: %q", i, got[i].Teaser, tt.wantStoriesStub[i].Teaser, tt.text)
+								}
+								if got[i].URL != tt.wantStoriesStub[i].URL {
+									t.Errorf("Summarize() for Stub, story %d URL got %q, want %q for text: %q", i, got[i].URL, tt.wantStoriesStub[i].URL, tt.text)
+								}
+							}
+						}
 					}
+					// For LangChain, tt.expectAnyStory and the general loop for non-empty headline/teaser cover current expectations.
+					// More specific checks for LLM (e.g., min number of stories) could be added here if needed.
 
 				}) // End of t.Run for test case
 			} // End of loop over test cases
