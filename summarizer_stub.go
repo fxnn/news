@@ -2,11 +2,6 @@ package main
 
 import "strings"
 
-// Summarizer is the minimal interface for any LLM-based summarizer.
-type Summarizer interface {
-	Summarize(text string) (string, error)
-}
-
 // summarizerStub implements Summarizer with a naive, non‑LLM placeholder.
 type summarizerStub struct{}
 
