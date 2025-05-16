@@ -80,11 +80,21 @@ Check it out: http://example.com/third-story
 			expectURLInStory:   false, // Current summarizers don't extract URLs to Story.URL. This makes the test expect empty URLs.
 		},
 		{
-			name: "HTML text - Multiple segments (potential for multiple stories in future)",
-			text: "<h1>Topic One</h1><p>Content for topic one. <a href='http://example.com/one'>Link1</a></p><h2>Topic Two</h2><p>Content for topic two. No link here.</p>",
+			name: "HTML text - Multiple stories from newsletter format",
+			text: `
+<div>
+  <h1>Main Story Headline HTML</h1>
+  <p>This is the first paragraph of the main HTML story. It has some  جذاب content. <a href="http://example.com/main-html">Read more...</a></p>
+  <p>Another paragraph for the first story.</p>
+</div>
+<div>
+  <h2>Secondary Story HTML</h2>
+  <p>This is the content for the second story in HTML. It might be shorter. Check out <a href="http://example.com/secondary-html">this link</a> for fun.</p>
+</div>
+`,
 			wantErr:            nil,
-			expectedNumStories: 1,     // Stub produces 1; current LLM prompt likely 1.
-			expectURLInStory:   false,
+			expectedNumStories: 2,     // We want to drive the capability to find 2 stories from this HTML.
+			expectURLInStory:   false, // Current summarizers don't extract URLs to Story.URL.
 		},
 	}
 
