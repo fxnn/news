@@ -10,30 +10,32 @@ func TestSummarizeImplementations(t *testing.T) {
 	testCases := []struct {
 		name string
 		text string
-		want string
-		// We don't check for specific want string because LLM output is non-deterministic
-		wantErr    error
-		checkEmpty bool // Flag to check if the output should be non-empty
+		// For stub, we can check wantStories. For LLM, we check checkNonEmptyStories and basic structure.
+		wantStories         []Story
+		wantErr             error
+		checkNonEmptyStories bool // Flag to check if the output slice of stories should be non-empty
 	}{
 		{
-			name:       "Empty text",
-			text:       "",
-			wantErr:    nil,
-			checkEmpty: false, // Expect empty summary for empty text
+			name:                "Empty text",
+			text:                "",
+			wantStories:         nil, // Or []Story{}
+			wantErr:             nil,
+			checkNonEmptyStories: false, // Expect empty slice of stories for empty text
 		},
 		{
-			name: "Normal text",
+			name: "Normal text - single story expected (for stub)",
 			text: "This is a reasonably long email body that requires summarization. " +
 				"It discusses the project status, upcoming deadlines, and action items for the team. " +
-				"We need to ensure the summary captures the key points without being too verbose.",
-			wantErr:    nil,
-			checkEmpty: true, // Expect a non-empty summary
+				"We need to ensure the summary captures the key points without being too verbose. More info at http://example.com/project-status",
+			// wantStories will be specific for the stub, for LLM we just check if it's non-empty and fields are populated
+			wantErr:             nil,
+			checkNonEmptyStories: true, // Expect a non-empty slice of stories
 		},
 		{
-			name:       "Short text",
-			text:       "OK",
-			wantErr:    nil,
-			checkEmpty: true, // Expect a non-empty summary even for short text
+			name:                "Short text - single story expected (for stub)",
+			text:                "OK. Read more http://example.com/ok",
+			wantErr:             nil,
+			checkNonEmptyStories: true, // Expect a non-empty slice of stories even for short text
 		},
 		// Add more test cases here if needed
 	}
@@ -71,25 +73,49 @@ func TestSummarizeImplementations(t *testing.T) {
 						return
 					}
 
-					// If an error was expected, we don't need to check the output string
+					// If an error was expected, we don't need to check the output
 					if tt.wantErr != nil {
 						return
 					}
 
-					// Check if the summary should be non-empty
-					if tt.checkEmpty && got == "" {
-						t.Errorf("Summarize() got an empty summary, want non-empty for text: %q", tt.text)
+					// Check if the slice of stories should be non-empty
+					if tt.checkNonEmptyStories {
+						if got == nil || len(got) == 0 {
+							t.Errorf("Summarize() got an empty or nil slice of stories, want non-empty for text: %q", tt.text)
+							return // Avoid further checks on nil/empty slice
+						}
+						// For non-empty, also check if stories have populated fields (basic check for LLM)
+						for i, story := range got {
+							if story.Headline == "" {
+								t.Errorf("Summarize() story %d has empty Headline for text: %q", i, tt.text)
+							}
+							if story.Teaser == "" {
+								t.Errorf("Summarize() story %d has empty Teaser for text: %q", i, tt.text)
+							}
+							// URL can sometimes be empty if not found, so this check might be too strict for all cases.
+							// For now, let's assume a URL is usually expected if a story is present.
+							// if story.URL == "" {
+							//  t.Errorf("Summarize() story %d has empty URL for text: %q", i, tt.text)
+							// }
+						}
 					}
 
-					// Check if the summary should be empty (only for the empty text case)
-					if !tt.checkEmpty && got != "" {
-						t.Errorf("Summarize() got = %q, want empty summary for empty text", got)
+					// Check if the slice of stories should be empty
+					if !tt.checkNonEmptyStories && (got != nil && len(got) > 0) {
+						t.Errorf("Summarize() got = %v, want empty or nil slice of stories for empty text", got)
 					}
 
-					// Optional: Check if summary is shorter than original (might be flaky)
-					// if tt.checkEmpty && len(got) >= len(tt.text) && len(tt.text) > 50 { // Only check for reasonably long texts
-					// 	t.Errorf("Summarize() summary length %d >= original length %d for text: %q", len(got), len(tt.text), tt.text)
-					// }
+					// Specific checks for stub - this part will need actual implementation of stub to match
+					if sName == "Stub" && tt.wantStories != nil {
+						// This is a placeholder for more detailed comparison if needed for the stub.
+						// For now, the length check and non-empty field checks above cover a lot.
+						// We might compare tt.wantStories with `got` directly if stub provides deterministic output.
+						if len(got) != len(tt.wantStories) {
+							t.Errorf("Summarize() for Stub, got %d stories, want %d stories for text: %q", len(got), len(tt.wantStories), tt.text)
+						}
+						// Further checks for content can be added here if tt.wantStories is defined for the stub.
+					}
+
 				}) // End of t.Run for test case
 			} // End of loop over test cases
 		}) // End of t.Run for summarizer type
