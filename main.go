@@ -59,39 +59,47 @@ func main() {
 		email := &emails[i] // Get a pointer to the email for modification
 
 		// Attempt to summarize the body using the chosen summarizer instance
-		stories, err := summarizer.Summarize(email.Body) // Use the summarizer instance
-		if err != nil {
+		email.Stories, email.SummarizationError = summarizer.Summarize(email.Body)
+		if email.SummarizationError != nil {
 			// Log the summarization error but continue processing other emails
-			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, err)
-			email.Summary = "[Summarization failed]" // Assign placeholder on error
-		} else {
-			if len(stories) > 0 {
-				// For now, just use the teaser of the first story as the summary
-				// We can enhance this later to display multiple stories
-				email.Summary = stories[0].Teaser
-				if stories[0].Headline != "" && stories[0].Headline != "Summary" {
-					email.Summary = stories[0].Headline + ": " + email.Summary
-				}
-				if stories[0].URL != "" {
-					email.Summary += " (Read more: " + stories[0].URL + ")"
-				}
-			} else {
-				email.Summary = "[No summary generated]"
-			}
+			// The error is stored in email.SummarizationError and will be handled by formatEmailDetails
+			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, email.SummarizationError)
 		}
 
-		fmt.Printf("\n=== Message ===\n")
-		fmt.Printf("UID: %d\n", email.UID)
-		fmt.Printf("Date: %v\n", email.Date)
-		fmt.Printf("Subject: %s\n", email.Subject)
-		fmt.Printf("From: %v\n", email.From)
-		fmt.Printf("To: %v\n", email.To)
-
-		// Create and print body preview
-		preview := createBodyPreview(email.Body)
-		fmt.Printf("Body Preview: %s\n", preview)
-		fmt.Printf("Summary: %s\n", email.Summary) // Print the summary
+		// Format and print the email details including all stories or errors
+		formattedOutput := formatEmailDetails(email)
+		fmt.Print(formattedOutput)
 	}
+}
+
+// formatEmailDetails creates a string representation of an email, including its basic info,
+// body preview, and all summarized stories or any summarization error.
+func formatEmailDetails(email *Email) string {
+	var sb strings.Builder
+
+	sb.WriteString("\n=== Message ===\n")
+	sb.WriteString(fmt.Sprintf("UID: %d\n", email.UID))
+	sb.WriteString(fmt.Sprintf("Date: %v\n", email.Date))
+	sb.WriteString(fmt.Sprintf("Subject: %s\n", email.Subject))
+	sb.WriteString(fmt.Sprintf("From: %v\n", email.From))
+	sb.WriteString(fmt.Sprintf("To: %v\n", email.To))
+
+	preview := createBodyPreview(email.Body)
+	sb.WriteString(fmt.Sprintf("Body Preview: %s\n", preview))
+
+	if email.SummarizationError != nil {
+		sb.WriteString(fmt.Sprintf("Summarization Error: %v\n", email.SummarizationError))
+	} else if len(email.Stories) == 0 {
+		sb.WriteString("[No summary generated]\n")
+	} else {
+		for i, story := range email.Stories {
+			sb.WriteString(fmt.Sprintf("--- Story %d ---\n", i+1))
+			sb.WriteString(fmt.Sprintf("Headline: %s\n", story.Headline))
+			sb.WriteString(fmt.Sprintf("Teaser: %s\n", story.Teaser))
+			sb.WriteString(fmt.Sprintf("URL: %s\n", story.URL))
+		}
+	}
+	return sb.String()
 }
 
 // createBodyPreview generates a short, single-line preview of an email body.
