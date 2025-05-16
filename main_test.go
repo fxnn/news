@@ -28,7 +28,7 @@ func TestCreateBodyPreview(t *testing.T) {
 		{
 			name: "Longer than 20 chars",
 			body: "This is a string that is definitely longer than one hundred characters, designed to test the truncation logic effectively. It needs to be long enough.",
-			want: "This is a string that is definitely longer than one hundred characters, designed to test the truncati...",
+			want: "This is a string that is definitely longer than one hundred characters, designed to test the truncat...",
 		},
 		{
 			name: "String with newline",
@@ -48,7 +48,7 @@ func TestCreateBodyPreview(t *testing.T) {
 		{
 			name: "String with multiple newlines",
 			body: "Line 1\nLine 2\nLine 3 is exceptionally long, so long in fact that after replacing newlines with spaces, it will most certainly exceed the one hundred character limit for previews, thereby requiring truncation to be applied by the function under test.",
-			want: "Line 1 Line 2 Line 3 is exceptionally long, so long in fact that after replacing newlines with spac...", // Adjusted expectation after replacement and truncation
+			want: "Line 1 Line 2 Line 3 is exceptionally long, so long in fact that after replacing newlines with space...", // Adjusted expectation after replacement and truncation
 		},
 		{
 			name: "String with leading/trailing spaces preserved",
