@@ -19,10 +19,16 @@ type ParsedStory struct {
 	Teaser   string `json:"teaser" describe:"A brief teaser for the story"`
 }
 
+// StoryListContainer is the top-level structure the LLM is expected to return,
+// containing a list of stories.
+type StoryListContainer struct {
+	Stories []ParsedStory `json:"stories" describe:"A list of identified news stories"`
+}
+
 // langChainSummarizer implements our Summarizer interface
 type langChainSummarizer struct {
 	chain  chains.Chain
-	parser schema.OutputParser[[]ParsedStory] // Parser for the LLM's structured output
+	parser schema.OutputParser[StoryListContainer] // Parser for the LLM's structured output
 }
 
 // NewLangChainSummarizer constructs a Summarizer backed by OpenAI via langchaingo.
@@ -41,8 +47,9 @@ func NewLangChainSummarizer() (Summarizer, error) {
 		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
 	}
 
-	// Create an output parser for a slice of ParsedStory structs
-	parser, err := outputparser.NewDefined([]ParsedStory{})
+	// Create an output parser for the StoryListContainer struct.
+	// The LLM will be instructed to return a JSON object matching this structure.
+	parser, err := outputparser.NewDefined(StoryListContainer{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create output parser: %w", err)
 	}
@@ -88,17 +95,17 @@ func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 		return nil, fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T. Full result: %v", result["text"], result)
 	}
 
-	// Parse the LLM's JSON output string into []ParsedStory
-	parsedLLMStories, err := s.parser.Parse(llmOutputText)
+	// Parse the LLM's JSON output string into a StoryListContainer
+	storyContainer, err := s.parser.Parse(llmOutputText)
 	if err != nil {
 		// Log the problematic text for debugging
-		fmt.Printf("Debug: Failed to parse LLM output. Output text: %s\n", llmOutputText)
-		return nil, fmt.Errorf("failed to parse LLM output into structured stories: %w", err)
+		fmt.Printf("Debug: Failed to parse LLM output. Output text was: <<<\n%s\n>>>\n", llmOutputText)
+		return nil, fmt.Errorf("failed to parse LLM output into StoryListContainer: %w", err)
 	}
 
-	// Convert []ParsedStory to []Story
+	// Convert []ParsedStory from the container to []Story
 	var stories []Story
-	for _, ps := range parsedLLMStories {
+	for _, ps := range storyContainer.Stories {
 		stories = append(stories, Story{
 			Headline: ps.Headline,
 			Teaser:   ps.Teaser,
