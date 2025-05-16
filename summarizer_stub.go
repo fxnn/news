@@ -5,20 +5,29 @@ import "strings"
 // summarizerStub implements Summarizer with a naive, non‑LLM placeholder.
 type summarizerStub struct{}
 
-// Summarize returns the first sentence (up to the first '.') or
-// truncates at 100 chars, never empty if input is non‑empty.
-func (c *summarizerStub) Summarize(text string) (string, error) {
+// Summarize returns a single Story. The teaser is generated based on the first sentence
+// (up to the first '.') or truncates at 100 chars. It returns nil for empty input.
+func (c *summarizerStub) Summarize(text string) ([]Story, error) {
 	if text == "" {
-		return "", nil
+		return nil, nil
 	}
+
+	var teaser string
 	if idx := strings.Index(text, "."); idx >= 0 {
-		// Return up to the first period, inclusive
-		return text[:idx+1], nil
+		// Teaser is up to the first period, inclusive
+		teaser = text[:idx+1]
+	} else if len(text) > 100 {
+		teaser = text[:100] + "..."
+	} else {
+		teaser = text
 	}
-	if len(text) > 100 {
-		return text[:100] + "...", nil
+
+	story := Story{
+		Headline: "Summary", // Placeholder headline
+		Teaser:   teaser,
+		URL:      "", // Placeholder URL, stub doesn't extract URLs
 	}
-	return text, nil
+	return []Story{story}, nil
 }
 
 // NewStubSummarizer creates a new instance of the stub summarizer.

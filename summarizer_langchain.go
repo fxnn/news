@@ -67,11 +67,12 @@ BRIEF TEASER:`,
 	return &langChainSummarizer{chain: stuffChain}, nil
 }
 
-// Summarize calls the underlying langchaingo SummarizeChain.
-// It still returns "" for empty input to match your tests.
-func (s *langChainSummarizer) Summarize(text string) (string, error) {
+// Summarize calls the underlying langchaingo chain.
+// It returns nil for empty input. For non-empty input, it returns a single Story
+// where the Teaser is the summarized text.
+func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 	if text == "" {
-		return "", nil
+		return nil, nil
 	}
 
 	// Prepare the input for the StuffDocuments chain
@@ -92,11 +93,19 @@ func (s *langChainSummarizer) Summarize(text string) (string, error) {
 
 	// Extract the summary string from the result map
 	// The output key from the underlying LLMChain is "text".
-	summary, ok := result["text"].(string)
+	summaryText, ok := result["text"].(string)
 	if !ok {
 		// Log the actual result for debugging if the type assertion fails
 		fmt.Printf("Debug: Unexpected result type or key. Result map: %v\n", result)
-		return "", fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T", result["text"])
+		return nil, fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T", result["text"])
 	}
-	return summary, nil
+
+	// For now, assume the LLM returns a single story's teaser.
+	// Headline and URL would need more sophisticated extraction or prompting.
+	story := Story{
+		Headline: "Summary", // Placeholder headline
+		Teaser:   summaryText,
+		URL:      "", // Placeholder URL, not extracted by current prompt
+	}
+	return []Story{story}, nil
 }
