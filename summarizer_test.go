@@ -58,11 +58,26 @@ func TestSummarizeImplementations(t *testing.T) {
 			expectURLInStory:   false,
 		},
 		{
-			name: "Plain text - Multiple segments (potential for multiple stories in future)",
-			text: "First topic is about apples. They are good. Second topic is about bananas. They are yellow. Find out more at http://fruits.com.",
+			name: "Plain text - Multiple stories from newsletter format",
+			text: `
+First Story Headline
+
+This is the body of the first story. It's a paragraph of text.
+Learn more: http://example.com/first-story
+
+Second Story Headline
+
+This is the body of the second story. It also has some interesting content.
+No specific URL for this one in the text.
+
+Third Story Headline
+
+And here's the third story. This one has a URL too.
+Check it out: http://example.com/third-story
+`,
 			wantErr:            nil,
-			expectedNumStories: 1,     // Stub produces 1; current LLM prompt likely 1.
-			expectURLInStory:   false,
+			expectedNumStories: 3,     // We want to drive the capability to find 3 stories.
+			expectURLInStory:   false, // Current summarizers don't extract URLs to Story.URL. This makes the test expect empty URLs.
 		},
 		{
 			name: "HTML text - Multiple segments (potential for multiple stories in future)",
