@@ -64,7 +64,6 @@ BRIEF TEASER:`,
 	// Although "text" is the default, we set it explicitly for clarity and robustness.
 	stuffChain.DocumentVariableName = "text"
 
-
 	return &langChainSummarizer{chain: stuffChain}, nil
 }
 
