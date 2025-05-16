@@ -10,5 +10,7 @@ type Email struct {
 	From    string
 	To      string
 	Body    string // Add Body field
-	Summary string // Add Summary field
+	// Summary string // Add Summary field - Replaced by Stories and SummarizationError
+	Stories            []Story // Stores all stories from the summarizer
+	SummarizationError error   // Stores any error from the summarization process
 }
