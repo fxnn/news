@@ -84,14 +84,14 @@ func main() {
 
 // createBodyPreview generates a short, single-line preview of an email body.
 // It replaces CRLF, newline, and carriage return characters with spaces,
-// then truncates to 20 characters, adding ellipsis if needed.
+// then truncates to 100 characters, adding ellipsis if needed.
 func createBodyPreview(body string) string {
 	// Replace CRLF first, then standalone CR and LF to handle all line endings correctly
 	preview := strings.ReplaceAll(body, "\r\n", " ")
 	preview = strings.ReplaceAll(preview, "\n", " ")
 	preview = strings.ReplaceAll(preview, "\r", " ") // Replace standalone CR with space
-	if len(preview) > 20 {
-		preview = preview[:20] + "..."
+	if len(preview) > 100 {
+		preview = preview[:100] + "..."
 	}
 	return preview
 }
