@@ -59,10 +59,15 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	// The LLM is instructed to identify multiple stories and format them as JSON.
 	promptTemplateString := fmt.Sprintf(`%s
 
-Identify distinct news stories or topics in the following text. For each story, provide a concise headline and a brief teaser.
-If the text contains meaningful content, you should provide at least one story summarizing its main point, even if it's very short.
-Output all identified stories according to the JSON schema provided above.
-Only if the text is genuinely empty or completely lacks summarizable content should you return a JSON object with an empty "stories" array, like this: {"stories": []}.
+Your task is to identify distinct news stories or topics in the provided text.
+For each identified story, provide a concise headline and a brief teaser.
+Format your entire output as a JSON object according to the schema provided above.
+
+IMPORTANT INSTRUCTIONS:
+- If the input text contains ANY discernible information, even if it's just a single sentence or a very short statement, you MUST treat it as a story. Provide at least one entry in the "stories" array.
+- Do NOT return an empty "stories" array if there is any meaningful content to summarize, no matter how short.
+- Only if the input text is completely empty, consists only of whitespace, or is absolute gibberish with no extractable meaning, should you return a JSON object with an empty "stories" array (e.g., {"stories": []}).
+- In all other cases, you must populate the "stories" array with at least one story.
 
 Text:
 "{{.text}}"
