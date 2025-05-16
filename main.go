@@ -59,13 +59,25 @@ func main() {
 		email := &emails[i] // Get a pointer to the email for modification
 
 		// Attempt to summarize the body using the chosen summarizer instance
-		summary, err := summarizer.Summarize(email.Body) // Use the summarizer instance
+		stories, err := summarizer.Summarize(email.Body) // Use the summarizer instance
 		if err != nil {
 			// Log the summarization error but continue processing other emails
 			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, err)
 			email.Summary = "[Summarization failed]" // Assign placeholder on error
 		} else {
-			email.Summary = summary // Assign the generated summary
+			if len(stories) > 0 {
+				// For now, just use the teaser of the first story as the summary
+				// We can enhance this later to display multiple stories
+				email.Summary = stories[0].Teaser
+				if stories[0].Headline != "" && stories[0].Headline != "Summary" {
+					email.Summary = stories[0].Headline + ": " + email.Summary
+				}
+				if stories[0].URL != "" {
+					email.Summary += " (Read more: " + stories[0].URL + ")"
+				}
+			} else {
+				email.Summary = "[No summary generated]"
+			}
 		}
 
 		fmt.Printf("\n=== Message ===\n")

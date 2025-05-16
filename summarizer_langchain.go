@@ -88,7 +88,7 @@ func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 	// Call the chain
 	result, err := chains.Call(context.Background(), s.chain, input)
 	if err != nil {
-		return "", fmt.Errorf("summarization chain call failed: %w", err)
+		return nil, fmt.Errorf("summarization chain call failed: %w", err)
 	}
 
 	// Extract the summary string from the result map
