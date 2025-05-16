@@ -3,3 +3,4 @@
 .local/
 news
 .aider*
+.DS_Store
