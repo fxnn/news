@@ -7,105 +7,104 @@ import (
 
 	"github.com/tmc/langchaingo/chains"
 	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/outputparser"
 	"github.com/tmc/langchaingo/prompts"
 	"github.com/tmc/langchaingo/schema"
 )
 
+// ParsedStory defines the structure we expect the LLM to return for each story.
+// Tags are for the outputparser.Defined.
+type ParsedStory struct {
+	Headline string `json:"headline" describe:"The headline of the story"`
+	Teaser   string `json:"teaser" describe:"A brief teaser for the story"`
+}
+
 // langChainSummarizer implements our Summarizer interface
 type langChainSummarizer struct {
-	// Use the generic chains.Chain interface
-	chain chains.Chain
+	chain  chains.Chain
+	parser schema.OutputParser[[]ParsedStory] // Parser for the LLM's structured output
 }
 
 // NewLangChainSummarizer constructs a Summarizer backed by OpenAI via langchaingo.
+// It now attempts to extract multiple stories in JSON format.
 func NewLangChainSummarizer() (Summarizer, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("environment variable OPENAI_API_KEY is required")
 	}
 
-	// Create an OpenAI LLM client
-	// Note: openai.New returns (llm, error)
 	llm, err := openai.New(
-		openai.WithToken(apiKey), // Use WithToken for the API key
-		// you can also tune Model, Temperature, MaxTokens, etc:
-		openai.WithModel("gpt-4o-mini"), // Specify the desired model
+		openai.WithToken(apiKey),
+		openai.WithModel("gpt-4o-mini"),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
 	}
 
-	// Define the custom prompt template
-	// Note: The input variable must be "text" for chains.NewStuffDocuments by default.
-	prompt := prompts.NewPromptTemplate(
-		`Create a very brief teaser highlighting the key insights from the following text.
-Follow these instructions strictly:
-- Use only prose and complete sentences.
-- Do not use bullet points or lists.
-- Do not mention the format of the original text (e.g., "This is an HTML email").
-- Do not include any metadata like dates or user names unless they are essential to the core insight.
-- Focus solely on the most important facts or stories. Keep it extremely short.
-- Write the teaser in the same language as the original text.
+	// Create an output parser for a slice of ParsedStory structs
+	parser, err := outputparser.NewDefined([]ParsedStory{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create output parser: %w", err)
+	}
+	formatInstructions := parser.GetFormatInstructions()
+
+	// Define the prompt template, incorporating format instructions for JSON output
+	// The LLM is instructed to identify multiple stories and format them as JSON.
+	promptTemplateString := fmt.Sprintf(`%s
+
+Identify distinct news stories or topics in the following text. For each story, provide a concise headline and a brief teaser.
+Output all identified stories according to the JSON schema provided above.
+If no distinct stories are found, or the text is too short to summarize, return an empty JSON array [].
 
 Text:
 "{{.text}}"
 
-BRIEF TEASER:`,
-		[]string{"text"},
-	)
+JSON Output:`, formatInstructions)
 
-	// Create an LLMChain with the custom prompt
+	prompt := prompts.NewPromptTemplate(promptTemplateString, []string{"text"})
 	llmChain := chains.NewLLMChain(llm, prompt)
-
-	// Create the StuffDocuments chain using the LLMChain
-	// This chain knows how to handle input documents and use the LLMChain
 	stuffChain := chains.NewStuffDocuments(llmChain)
-	// Ensure the variable name used by StuffDocuments matches the LLMChain's prompt input variable.
-	// Although "text" is the default, we set it explicitly for clarity and robustness.
-	stuffChain.DocumentVariableName = "text"
+	stuffChain.DocumentVariableName = "text" // Ensure StuffDocuments uses "text" for the LLMChain
 
-	return &langChainSummarizer{chain: stuffChain}, nil
+	return &langChainSummarizer{chain: stuffChain, parser: parser}, nil
 }
 
-// Summarize calls the underlying langchaingo chain.
-// It returns nil for empty input. For non-empty input, it returns a single Story
-// where the Teaser is the summarized text.
+// Summarize calls the underlying langchaingo chain and parses the structured output.
 func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 	if text == "" {
 		return nil, nil
 	}
 
-	// Prepare the input for the StuffDocuments chain
-	// The default input key is "input_documents", expecting a slice of schema.Document.
-	// The default output key is "output_text".
-	docs := []schema.Document{
-		{PageContent: text},
-	}
-	input := map[string]any{
-		"input_documents": docs,
-	}
+	docs := []schema.Document{{PageContent: text}}
+	input := map[string]any{"input_documents": docs}
 
-	// Call the chain
 	result, err := chains.Call(context.Background(), s.chain, input)
 	if err != nil {
 		return nil, fmt.Errorf("summarization chain call failed: %w", err)
 	}
 
-	// Extract the summary string from the result map
-	// The output key from the underlying LLMChain is "text".
-	summaryText, ok := result["text"].(string)
+	llmOutputText, ok := result["text"].(string)
 	if !ok {
-		// Log the actual result for debugging if the type assertion fails
-		fmt.Printf("Debug: Unexpected result type or key. Result map: %v\n", result)
-		return nil, fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T", result["text"])
+		return nil, fmt.Errorf("unexpected output type from summarization chain: expected string under key 'text', got %T. Full result: %v", result["text"], result)
 	}
 
-	// For now, assume the LLM returns a single story's teaser.
-	// Headline and URL would need more sophisticated extraction or prompting.
-	story := Story{
-		Headline: "Summary", // Placeholder headline
-		Teaser:   summaryText,
-		URL:      "", // Placeholder URL, not extracted by current prompt
+	// Parse the LLM's JSON output string into []ParsedStory
+	parsedLLMStories, err := s.parser.Parse(llmOutputText)
+	if err != nil {
+		// Log the problematic text for debugging
+		fmt.Printf("Debug: Failed to parse LLM output. Output text: %s\n", llmOutputText)
+		return nil, fmt.Errorf("failed to parse LLM output into structured stories: %w", err)
 	}
-	return []Story{story}, nil
+
+	// Convert []ParsedStory to []Story
+	var stories []Story
+	for _, ps := range parsedLLMStories {
+		stories = append(stories, Story{
+			Headline: ps.Headline,
+			Teaser:   ps.Teaser,
+			URL:      "", // URL extraction is not part of this prompt
+		})
+	}
+
+	return stories, nil
 }
