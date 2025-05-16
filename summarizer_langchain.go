@@ -61,7 +61,7 @@ func NewLangChainSummarizer() (Summarizer, error) {
 
 Identify distinct news stories or topics in the following text. For each story, provide a concise headline and a brief teaser.
 Output all identified stories according to the JSON schema provided above.
-If no distinct stories are found, or the text is too short to summarize, return an empty JSON array [].
+If no distinct stories are found, or the text is too short to summarize, return a JSON object with an empty "stories" array, like this: {"stories": []}.
 
 Text:
 "{{.text}}"
