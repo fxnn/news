@@ -8,9 +8,9 @@ import (
 func TestSummarizeImplementations(t *testing.T) {
 	// Define the test cases once
 	testCases := []struct {
-		name       string
-		text       string
-		want    string
+		name string
+		text string
+		want string
 		// We don't check for specific want string because LLM output is non-deterministic
 		wantErr    error
 		checkEmpty bool // Flag to check if the output should be non-empty
@@ -64,32 +64,32 @@ func TestSummarizeImplementations(t *testing.T) {
 
 					// Check for unexpected errors
 					if err != tt.wantErr {
-				// If we expected a specific error (like ErrSummarizationNotImplemented in the future)
-				// and got a different one, fail.
-				// If we expected no error (wantErr == nil) and got one, fail.
-				t.Errorf("Summarize() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+						// If we expected a specific error (like ErrSummarizationNotImplemented in the future)
+						// and got a different one, fail.
+						// If we expected no error (wantErr == nil) and got one, fail.
+						t.Errorf("Summarize() error = %v, wantErr %v", err, tt.wantErr)
+						return
+					}
 
-			// If an error was expected, we don't need to check the output string
-			if tt.wantErr != nil {
-				return
-			}
+					// If an error was expected, we don't need to check the output string
+					if tt.wantErr != nil {
+						return
+					}
 
-			// Check if the summary should be non-empty
-			if tt.checkEmpty && got == "" {
-				t.Errorf("Summarize() got an empty summary, want non-empty for text: %q", tt.text)
-			}
+					// Check if the summary should be non-empty
+					if tt.checkEmpty && got == "" {
+						t.Errorf("Summarize() got an empty summary, want non-empty for text: %q", tt.text)
+					}
 
-			// Check if the summary should be empty (only for the empty text case)
-			if !tt.checkEmpty && got != "" {
-				t.Errorf("Summarize() got = %q, want empty summary for empty text", got)
-			}
+					// Check if the summary should be empty (only for the empty text case)
+					if !tt.checkEmpty && got != "" {
+						t.Errorf("Summarize() got = %q, want empty summary for empty text", got)
+					}
 
-			// Optional: Check if summary is shorter than original (might be flaky)
-			// if tt.checkEmpty && len(got) >= len(tt.text) && len(tt.text) > 50 { // Only check for reasonably long texts
-			// 	t.Errorf("Summarize() summary length %d >= original length %d for text: %q", len(got), len(tt.text), tt.text)
-			// }
+					// Optional: Check if summary is shorter than original (might be flaky)
+					// if tt.checkEmpty && len(got) >= len(tt.text) && len(tt.text) > 50 { // Only check for reasonably long texts
+					// 	t.Errorf("Summarize() summary length %d >= original length %d for text: %q", len(got), len(tt.text), tt.text)
+					// }
 				}) // End of t.Run for test case
 			} // End of loop over test cases
 		}) // End of t.Run for summarizer type
