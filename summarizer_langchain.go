@@ -60,8 +60,9 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	promptTemplateString := fmt.Sprintf(`%s
 
 Identify distinct news stories or topics in the following text. For each story, provide a concise headline and a brief teaser.
+If the text contains meaningful content, you should provide at least one story summarizing its main point, even if it's very short.
 Output all identified stories according to the JSON schema provided above.
-If no distinct stories are found, or the text is too short to summarize, return a JSON object with an empty "stories" array, like this: {"stories": []}.
+Only if the text is genuinely empty or completely lacks summarizable content should you return a JSON object with an empty "stories" array, like this: {"stories": []}.
 
 Text:
 "{{.text}}"
