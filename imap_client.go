@@ -16,17 +16,17 @@ import (
 func FetchEmails(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
 	// Connect to server
 	addr := fmt.Sprintf("%s:%d", server, port)
-	
+
 	var c *client.Client
 	var err error
-	
+
 	// Use TLS or non-TLS connection based on the tls parameter
 	if tls {
 		c, err = client.DialTLS(addr, nil)
 	} else {
 		c, err = client.Dial(addr)
 	}
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", addr, err)
 	}
@@ -136,7 +136,6 @@ func formatAddresses(addresses []*imap.Address) string {
 	return fmt.Sprintf("%s@%s", addr.MailboxName, addr.HostName)
 }
 
- 
 // extractPlainText walks through the MIME parts of an email body and extracts
 // the plain text content. It prefers "text/plain"; if that’s missing, it
 // returns the raw HTML body.

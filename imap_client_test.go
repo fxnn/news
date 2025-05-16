@@ -136,7 +136,7 @@ func setupMockIMAPServer(t *testing.T, messages []TestMessage) (host string, por
 func TestFetchEmails(t *testing.T) {
 	// Define test messages
 	recentDate := time.Now().AddDate(0, 0, -3) // 3 days ago
-	oldDate := time.Now().AddDate(0, 0, -10)  // 10 days ago
+	oldDate := time.Now().AddDate(0, 0, -10)   // 10 days ago
 	testMessages := []TestMessage{
 		{
 			Date:      recentDate,
