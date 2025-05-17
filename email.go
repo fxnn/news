@@ -2,6 +2,13 @@ package main
 
 import "time"
 
+// Story represents a single news item or section extracted from an email.
+type Story struct {
+	Headline string
+	Teaser   string
+	URL      string
+}
+
 // Email represents the structure of a fetched email.
 type Email struct {
 	UID     uint32
