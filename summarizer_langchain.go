@@ -110,13 +110,33 @@ func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 		return nil, fmt.Errorf("failed to parse LLM output into StoryListContainer: %w", err)
 	}
 
+	// Propagate URLs to stories that are missing them, using neighbors.
+	// This is done if the LLM returns multiple stories and some have URLs while others don't.
+	if len(storyContainer.Stories) > 1 {
+		// First pass: forward propagation (borrow from previous)
+		// Start from the second story and look back.
+		for i := 1; i < len(storyContainer.Stories); i++ {
+			if storyContainer.Stories[i].URL == "" && storyContainer.Stories[i-1].URL != "" {
+				storyContainer.Stories[i].URL = storyContainer.Stories[i-1].URL
+			}
+		}
+
+		// Second pass: backward propagation (borrow from next)
+		// Iterate from second-to-last down to the first element.
+		for i := len(storyContainer.Stories) - 2; i >= 0; i-- {
+			if storyContainer.Stories[i].URL == "" && storyContainer.Stories[i+1].URL != "" {
+				storyContainer.Stories[i].URL = storyContainer.Stories[i+1].URL
+			}
+		}
+	}
+
 	// Convert []ParsedStory from the container to []Story
 	var stories []Story
 	for _, ps := range storyContainer.Stories {
 		stories = append(stories, Story{
 			Headline: ps.Headline,
 			Teaser:   ps.Teaser,
-			URL:      ps.URL, // Map the URL from ParsedStory
+			URL:      ps.URL, // URL may have been filled by neighbor logic
 		})
 	}
 
