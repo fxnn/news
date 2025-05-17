@@ -47,40 +47,37 @@ func TestStoriesHandler(t *testing.T) {
 	story2 := Story{Headline: "Story 2", Teaser: "Teaser 2", URL: "http://example.com/2"}
 
 	// This error simulates an error that would be returned by fetchAndSummarizeEmails
-	simulatedInitialFetchError := errors.New("simulated initial fetch/summary error")
-
 	tests := []struct {
 		name               string
 		inputStories       []Story // Stories to pass directly to the handler
-		inputError         error   // Error to pass directly to the handler
 		expectedStatusCode int
 		expectedBody       string // Expected JSON string
 	}{
 		{
-			name:               "initial fetch or summarization error",
+			name: "error during initial fetch (handler receives empty stories)",
+			// This simulates the scenario where main encountered an error during
+			// fetchAndSummarizeEmails, logged it, and then startHttpServer
+			// was called with empty emails, leading to newStoriesHandler
+			// receiving nil or an empty slice for inputStories.
 			inputStories:       nil,
-			inputError:         simulatedInitialFetchError,
-			expectedStatusCode: http.StatusInternalServerError,
-			expectedBody:       "Failed to fetch or summarize emails: simulated initial fetch/summary error\n",
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "[]\n",
 		},
 		{
 			name:               "no stories available after successful initial processing",
 			inputStories:       []Story{},
-			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "[]\n",
 		},
 		{
 			name:               "multiple stories available",
 			inputStories:       []Story{story1, story2},
-			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"},{"Headline":"Story 2","Teaser":"Teaser 2","URL":"http://example.com/2"}]` + "\n",
 		},
 		{
 			name:               "single story available",
 			inputStories:       []Story{story1},
-			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
 		},
@@ -88,9 +85,10 @@ func TestStoriesHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// newStoriesHandler now takes the pre-processed stories and error directly.
-			// testCfg, tt.summarizer, and tt.fetcher are no longer needed here.
-			handler := newStoriesHandler(tt.inputStories, tt.inputError)
+			// newStoriesHandler now only takes the pre-processed stories.
+			// Error handling for initial fetch/summary is done in main,
+			// before this handler is even constructed with stories.
+			handler := newStoriesHandler(tt.inputStories)
 
 			req := httptest.NewRequest("GET", "/stories", nil)
 			rr := httptest.NewRecorder()

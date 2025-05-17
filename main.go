@@ -108,14 +108,9 @@ func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summar
 	return emails, nil
 }
 
-// processEmails fetches, summarizes, and prints emails for CLI mode.
-func processEmails(cfg config, summarizer Summarizer) {
-	emails, err := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer) // Use the real FetchEmails
-	if err != nil {
-		// fetchAndSummarizeEmails already wraps the error from FetchEmails
-		log.Fatalf("Error processing emails: %v\n", err)
-	}
-
+// processEmails prints emails for CLI mode.
+// It now receives the already fetched and summarized emails.
+func processEmails(emails []Email) {
 	if len(emails) == 0 {
 		fmt.Println("No emails found matching the criteria.")
 		return
@@ -136,32 +131,32 @@ func main() {
 	cfg := parseAndValidateFlags()
 	summarizer := initializeSummarizer(cfg.summarizerType) // Initialize summarizer once
 
-	if cfg.mode == "cli" {
-		processEmails(cfg, summarizer)
-	} else if cfg.mode == "server" {
-		// Fetch and summarize emails once at startup for server mode
-		log.Println("Server mode: Fetching and summarizing emails at startup...")
-		initialEmails, initialFetchErr := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer)
-		if initialFetchErr != nil {
-			// Log the error; the server will still start, but /stories will reflect this error.
-			log.Printf("WARN: Initial fetch and summary for server mode failed: %v", initialFetchErr)
-		} else {
-			log.Printf("Initial fetch and summary complete. Processed %d emails.", len(initialEmails))
+	log.Println("Fetching and summarizing emails...")
+	// Fetch and summarize emails once, regardless of mode.
+	processedEmails, fetchErr := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer)
+	if fetchErr != nil {
+		log.Printf("ERROR: Failed to fetch and summarize emails: %v", fetchErr)
+		// For CLI mode, this is fatal.
+		if cfg.mode == "cli" {
+			log.Fatalf("Exiting due to email processing failure.")
 		}
-		startHttpServer(cfg, initialEmails, initialFetchErr)
+		// For server mode, continue with empty emails. The error is logged.
+		processedEmails = []Email{}
+	} else {
+		log.Printf("Successfully fetched and summarized %d emails.", len(processedEmails))
+	}
+
+	if cfg.mode == "cli" {
+		processEmails(processedEmails)
+	} else if cfg.mode == "server" {
+		startHttpServer(cfg, processedEmails)
 	}
 }
 
 // newStoriesHandler creates an HTTP handler for the /stories endpoint.
-// It uses pre-fetched stories and any error that occurred during the initial fetch.
-func newStoriesHandler(allStories []Story, fetchErr error) http.HandlerFunc {
+// It uses pre-aggregated stories.
+func newStoriesHandler(allStories []Story) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if fetchErr != nil {
-			log.Printf("ERROR: Serving /stories, initial fetch/summary failed: %v", fetchErr)
-			http.Error(w, fmt.Sprintf("Failed to fetch or summarize emails: %v", fetchErr), http.StatusInternalServerError)
-			return
-		}
-
 		w.Header().Set("Content-Type", "application/json")
 		// Ensure an empty JSON array "[]" is sent if allStories is empty, not "null".
 		if len(allStories) == 0 {
@@ -177,24 +172,26 @@ func newStoriesHandler(allStories []Story, fetchErr error) http.HandlerFunc {
 }
 
 // startHttpServer starts the HTTP server with configured routes.
-// It receives initially fetched emails and any error from that process.
-func startHttpServer(cfg config, initialEmails []Email, initialFetchErr error) {
+// It receives the already fetched and summarized emails.
+func startHttpServer(cfg config, emails []Email) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "HTTP server is running")
 	})
 
 	var allStoriesForHandler []Story
-	if initialFetchErr == nil { // Only extract stories if the initial fetch was successful
-		for _, email := range initialEmails {
-			// Only include stories from emails that produced stories.
-			if len(email.Stories) > 0 {
-				allStoriesForHandler = append(allStoriesForHandler, email.Stories...)
-			}
+	// Extract stories from the processed emails.
+	// If fetchAndSummarizeEmails failed in main, 'emails' will be empty,
+	// resulting in allStoriesForHandler being empty.
+	for _, email := range emails {
+		if len(email.Stories) > 0 {
+			allStoriesForHandler = append(allStoriesForHandler, email.Stories...)
 		}
 	}
 
 	// Setup /stories handler
-	storiesHandler := newStoriesHandler(allStoriesForHandler, initialFetchErr)
+	// The error from fetching/summarizing is handled in main.
+	// newStoriesHandler now only needs the stories.
+	storiesHandler := newStoriesHandler(allStoriesForHandler)
 	http.HandleFunc("/stories", storiesHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.httpPort)
