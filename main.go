@@ -94,10 +94,15 @@ func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summar
 	for i := range emails {
 		email := &emails[i] // Use pointer to modify the slice element
 		if email.Body != "" {
-			email.Stories, email.SummarizationError = summarizer.Summarize(email.Body)
+			stories, err := summarizer.Summarize(email.Body)
+			if err != nil {
+				log.Printf("WARN: Failed to summarize email UID %d, Subject '%s': %v", email.UID, email.Subject, err)
+				email.Stories = []Story{} // Ensure Stories is an empty slice on error
+			} else {
+				email.Stories = stories
+			}
 		} else {
-			email.Stories = []Story{} // Ensure Stories is not nil
-			email.SummarizationError = nil
+			email.Stories = []Story{} // Ensure Stories is not nil for empty body
 		}
 	}
 	return emails, nil
@@ -120,11 +125,8 @@ func processEmails(cfg config, summarizer Summarizer) {
 	for i := range emails {
 		email := &emails[i]
 
-		// Log summarization errors if any occurred (already populated by fetchAndSummarizeEmails)
-		if email.SummarizationError != nil {
-			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, email.SummarizationError)
-		}
-
+		// Summarization errors are now logged within fetchAndSummarizeEmails.
+		// We just proceed to format and print.
 		formattedOutput := formatEmailDetails(email)
 		fmt.Print(formattedOutput)
 	}
@@ -155,9 +157,9 @@ func newStoriesHandler(cfg config, summarizer Summarizer, fetcher EmailFetcher) 
 
 		allStories := []Story{}
 		for _, email := range emails {
-			// Only include stories from emails that were successfully summarized
-			// and actually produced stories.
-			if email.SummarizationError == nil && len(email.Stories) > 0 {
+			// Only include stories from emails that produced stories.
+			// Emails with summarization errors will have an empty Stories slice.
+			if len(email.Stories) > 0 {
 				allStories = append(allStories, email.Stories...)
 			}
 		}
@@ -209,9 +211,7 @@ func formatEmailDetails(email *Email) string {
 	preview := createBodyPreview(email.Body)
 	sb.WriteString(fmt.Sprintf("Body Preview: %s\n", preview))
 
-	if email.SummarizationError != nil {
-		sb.WriteString(fmt.Sprintf("Summarization Error: %v\n", email.SummarizationError))
-	} else if len(email.Stories) == 0 {
+	if len(email.Stories) == 0 {
 		sb.WriteString("[No summary generated]\n")
 	} else {
 		for i, story := range email.Stories {

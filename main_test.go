@@ -47,7 +47,9 @@ func TestStoriesHandler(t *testing.T) {
 
 	email1 := Email{UID: 1, Subject: "Email 1", Body: "Body 1", Date: fixedTime, Stories: []Story{story1}}
 	email2 := Email{UID: 2, Subject: "Email 2", Body: "Body 2", Date: fixedTime, Stories: []Story{story2}}
-	emailWithSummarizationError := Email{UID: 3, Subject: "Email 3", Body: "Body 3", Date: fixedTime, SummarizationError: errors.New("summarization failed")}
+	// emailWithSummarizationError will have its Stories field become empty after fetchAndSummarizeEmails
+	// if the mock summarizer returns an error for its body.
+	emailWithSummarizationError := Email{UID: 3, Subject: "Email 3", Body: "Body 3", Date: fixedTime}
 	emailNoStories := Email{UID: 4, Subject: "Email 4", Body: "Body 4", Date: fixedTime, Stories: []Story{}}
 
 	tests := []struct {
@@ -93,13 +95,13 @@ func TestStoriesHandler(t *testing.T) {
 				if text == "Body 1" {
 					return []Story{story1}, nil
 				}
-				if text == "Body 3" { // This email will have SummarizationError set by fetchAndSummarizeEmails
+				if text == "Body 3" { // This email will have its Stories set to []Story{} by fetchAndSummarizeEmails
 					return nil, errors.New("summarization failed")
 				}
 				return nil, nil
 			}},
 			expectedStatusCode: http.StatusOK,
-			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
+			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n", // Only story1 should be present
 		},
 		{
 			name:    "email generates no stories",
@@ -250,7 +252,6 @@ func TestFormatEmailDetails(t *testing.T) {
 					{Headline: "Story 1", Teaser: "Teaser for story 1.", URL: "http://example.com/story1"},
 					{Headline: "Story 2", Teaser: "Teaser for story 2.", URL: "http://example.com/story2"},
 				},
-				SummarizationError: nil,
 			},
 			want: `
 === Message ===
@@ -282,7 +283,6 @@ URL: http://example.com/story2
 				Stories: []Story{
 					{Headline: "Important News", Teaser: "Just one important thing.", URL: ""},
 				},
-				SummarizationError: nil,
 			},
 			want: `
 === Message ===
@@ -305,10 +305,9 @@ URL:
 				Date:               testDate,
 				Subject:            "Empty Summary",
 				From:               "sender@example.com",
-				To:                 "receiver@example.com",
-				Body:               sampleBody,
-				Stories:            []Story{},
-				SummarizationError: nil,
+				To:      "receiver@example.com",
+				Body:    sampleBody,
+				Stories: []Story{},
 			},
 			want: `
 === Message ===
@@ -328,10 +327,9 @@ Body Preview: ` + expectedPreview + `
 				Date:               testDate,
 				Subject:            "Failed Summary",
 				From:               "sender@example.com",
-				To:                 "receiver@example.com",
-				Body:               sampleBody,
-				Stories:            nil,
-				SummarizationError: fmt.Errorf("summarizer timed out"),
+				To:      "receiver@example.com",
+				Body:    sampleBody,
+				Stories: []Story{}, // Representing a case where summarization might have failed or returned no stories
 			},
 			want: `
 === Message ===
@@ -341,7 +339,7 @@ Subject: Failed Summary
 From: sender@example.com
 To: receiver@example.com
 Body Preview: ` + expectedPreview + `
-Summarization Error: summarizer timed out
+[No summary generated]
 `,
 		},
 		{
@@ -356,7 +354,6 @@ Summarization Error: summarizer timed out
 				Stories: []Story{
 					{Headline: "", Teaser: "Teaser for story.", URL: "http://example.com/storyX"},
 				},
-				SummarizationError: nil,
 			},
 			want: `
 === Message ===
