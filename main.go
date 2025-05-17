@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http" // Import net/http package
 	"strings"  // Import strings package
+	"time"     // Import time package
 )
 
 // EmailFetcher defines the signature for a function that fetches emails.
@@ -94,15 +95,20 @@ func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summar
 	for i := range emails {
 		email := &emails[i] // Use pointer to modify the slice element
 		if email.Body != "" {
+			startTime := time.Now()
 			stories, err := summarizer.Summarize(email.Body)
+			duration := time.Since(startTime)
+
 			if err != nil {
 				log.Printf("WARN: Failed to summarize email UID %d, Subject '%s': %v", email.UID, email.Subject, err)
 				email.Stories = []Story{} // Ensure Stories is an empty slice on error
 			} else {
 				email.Stories = stories
 			}
+			log.Printf("INFO: Processed summary for email UID %d (Date: %s, From: %s) in %v", email.UID, email.Date.Format("2006-01-02"), email.From, duration)
 		} else {
 			email.Stories = []Story{} // Ensure Stories is not nil for empty body
+			log.Printf("INFO: Skipped summary for email UID %d (Date: %s, From: %s) due to empty body", email.UID, email.Date.Format("2006-01-02"), email.From)
 		}
 	}
 	return emails, nil
