@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"strings" // Import strings package
+	"net/http" // Import net/http package
+	"strings"  // Import strings package
 )
 
 // config holds all the application configuration values derived from flags.
@@ -16,6 +17,8 @@ type config struct {
 	folder         string
 	days           int
 	summarizerType string
+	mode           string // Application mode: "cli" or "server"
+	httpPort       int    // Port for HTTP server mode
 }
 
 // parseAndValidateFlags parses command line flags and validates required ones.
@@ -29,11 +32,18 @@ func parseAndValidateFlags() config {
 	flag.StringVar(&cfg.folder, "folder", "INBOX", "Email folder to search")
 	flag.IntVar(&cfg.days, "days", 7, "Number of days to look back")
 	flag.StringVar(&cfg.summarizerType, "summarizer", "stub", "Summarizer type ('stub' or 'langchain')")
+	flag.StringVar(&cfg.mode, "mode", "cli", "Application mode ('cli' or 'server')")
+	flag.IntVar(&cfg.httpPort, "http-port", 8080, "Port for HTTP server (if mode is 'server')")
 	flag.Parse()
 
-	if cfg.server == "" || cfg.username == "" || cfg.password == "" {
+	if cfg.mode != "cli" && cfg.mode != "server" {
 		flag.Usage()
-		log.Fatal("server, username, and password are required")
+		log.Fatal("Invalid mode. Choose 'cli' or 'server'.")
+	}
+
+	if cfg.mode == "cli" && (cfg.server == "" || cfg.username == "" || cfg.password == "") {
+		flag.Usage()
+		log.Fatal("server, username, and password are required for cli mode")
 	}
 	return cfg
 }
@@ -87,8 +97,26 @@ func processEmails(cfg config, summarizer Summarizer) {
 
 func main() {
 	cfg := parseAndValidateFlags()
-	summarizer := initializeSummarizer(cfg.summarizerType)
-	processEmails(cfg, summarizer)
+
+	if cfg.mode == "cli" {
+		summarizer := initializeSummarizer(cfg.summarizerType)
+		processEmails(cfg, summarizer)
+	} else if cfg.mode == "server" {
+		startHttpServer(cfg)
+	}
+}
+
+// startHttpServer starts a simple HTTP server.
+func startHttpServer(cfg config) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "HTTP server is running")
+	})
+
+	addr := fmt.Sprintf(":%d", cfg.httpPort)
+	log.Printf("Starting HTTP server on %s\n", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("Failed to start HTTP server: %v", err)
+	}
 }
 
 // formatEmailDetails creates a string representation of an email, including its basic info,
