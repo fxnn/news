@@ -26,15 +26,15 @@ func TestSummarizeImplementations(t *testing.T) {
 			text: "This is a reasonably long email body that requires summarization. " +
 				"It discusses the project status. More info at http://example.com/project-status.",
 			wantErr:            nil,
-			expectedNumStories: 1,     // Both stub and current LLM produce 1 story.
-			expectURLInStory:   false, // Current summarizers don't populate Story.URL.
+			expectedNumStories: 1, // Both stub and current LLM produce 1 story.
+			expectURLInStory:   true,
 		},
 		{
 			name:               "Plain text - Short story, with URL in input",
 			text:               "OK. Read more http://example.com/ok.",
 			wantErr:            nil,
 			expectedNumStories: 1,
-			expectURLInStory:   false,
+			expectURLInStory:   true,
 		},
 		{
 			name:               "Plain text - Single story, no URL in input",
@@ -48,7 +48,7 @@ func TestSummarizeImplementations(t *testing.T) {
 			text:               "<p>This is <b>HTML</b> content. Learn more <a href='http://example.com/html-story'>here</a>.</p>",
 			wantErr:            nil,
 			expectedNumStories: 1,
-			expectURLInStory:   false,
+			expectURLInStory:   true,
 		},
 		{
 			name:               "HTML text - Single story, no URL in input",
@@ -76,8 +76,8 @@ And here's the third story. This one has a URL too.
 Check it out: http://example.com/third-story
 `,
 			wantErr:            nil,
-			expectedNumStories: 3,     // We want to drive the capability to find 3 stories.
-			expectURLInStory:   false, // Current summarizers don't extract URLs to Story.URL. This makes the test expect empty URLs.
+			expectedNumStories: 3, // We want to drive the capability to find 3 stories.
+			expectURLInStory:   true,
 		},
 		{
 			name: "HTML text - Multiple stories from newsletter format",
@@ -93,8 +93,8 @@ Check it out: http://example.com/third-story
 </div>
 `,
 			wantErr:            nil,
-			expectedNumStories: 2,     // We want to drive the capability to find 2 stories from this HTML.
-			expectURLInStory:   false, // Current summarizers don't extract URLs to Story.URL.
+			expectedNumStories: 2, // We want to drive the capability to find 2 stories from this HTML.
+			expectURLInStory:   true,
 		},
 	}
 
