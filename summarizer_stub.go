@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -15,6 +16,14 @@ func (c *summarizerStub) Summarize(text string) ([]Story, error) {
 		return nil, nil
 	}
 
+	// Simple regex to find the first URL. This is a basic stub behavior.
+	re := regexp.MustCompile(`https?://[^\s]+`)
+	foundURL := ""
+	matches := re.FindStringSubmatch(text)
+	if len(matches) > 0 {
+		foundURL = matches[0]
+	}
+
 	var stories []Story
 
 	// Heuristic for plain text multi-story test case: count "Story Headline"
@@ -25,7 +34,7 @@ func (c *summarizerStub) Summarize(text string) ([]Story, error) {
 				stories = append(stories, Story{
 					Headline: fmt.Sprintf("Summary %d", i+1),
 					Teaser:   fmt.Sprintf("Placeholder teaser for plain story %d.", i+1),
-					URL:      "",
+					URL:      foundURL, // Use the extracted URL
 				})
 			}
 			return stories, nil
@@ -43,7 +52,7 @@ func (c *summarizerStub) Summarize(text string) ([]Story, error) {
 				stories = append(stories, Story{
 					Headline: fmt.Sprintf("Summary %d", i+1),
 					Teaser:   fmt.Sprintf("Placeholder teaser for HTML story %d.", i+1),
-					URL:      "",
+					URL:      foundURL, // Use the extracted URL
 				})
 			}
 			return stories, nil
@@ -63,7 +72,7 @@ func (c *summarizerStub) Summarize(text string) ([]Story, error) {
 	story := Story{
 		Headline: "Summary", // Placeholder headline
 		Teaser:   teaser,
-		URL:      "", // Placeholder URL, stub doesn't extract URLs
+		URL:      foundURL, // Use the extracted URL
 	}
 	return []Story{story}, nil
 }

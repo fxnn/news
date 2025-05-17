@@ -17,6 +17,7 @@ import (
 type ParsedStory struct {
 	Headline string `json:"headline" describe:"The headline of the story"`
 	Teaser   string `json:"teaser" describe:"A brief teaser for the story"`
+	URL      string `json:"url" describe:"The primary URL associated with the story, if any. If multiple URLs are relevant, pick the most prominent one. If no URL is present in the story, this can be an empty string."`
 }
 
 // StoryListContainer is the top-level structure the LLM is expected to return,
@@ -60,7 +61,7 @@ func NewLangChainSummarizer() (Summarizer, error) {
 	promptTemplateString := fmt.Sprintf(`%s
 
 Your task is to identify distinct news stories or topics in the provided text.
-For each identified story, provide a concise headline and a brief teaser.
+For each identified story, provide a concise headline, a brief teaser, and the primary URL associated with the story if one is present.
 Format your entire output as a JSON object according to the schema provided above.
 
 IMPORTANT INSTRUCTIONS:
@@ -115,7 +116,7 @@ func (s *langChainSummarizer) Summarize(text string) ([]Story, error) {
 		stories = append(stories, Story{
 			Headline: ps.Headline,
 			Teaser:   ps.Teaser,
-			URL:      "", // URL extraction is not part of this prompt
+			URL:      ps.URL, // Map the URL from ParsedStory
 		})
 	}
 
