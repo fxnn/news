@@ -43,100 +43,54 @@ func mockEmailFetcher(numEmails int, errorToReturn error) EmailFetcher {
 }
 
 func TestStoriesHandler(t *testing.T) {
-	testCfg := config{ // Basic config for tests, specific fields overridden as needed
-		server:   "test.imap.com",
-		port:     993,
-		username: "user",
-		password: "password",
-		folder:   "INBOX",
-		days:     7,
-	}
-
 	story1 := Story{Headline: "Story 1", Teaser: "Teaser 1", URL: "http://example.com/1"}
 	story2 := Story{Headline: "Story 2", Teaser: "Teaser 2", URL: "http://example.com/2"}
 
+	// This error simulates an error that would be returned by fetchAndSummarizeEmails
+	simulatedInitialFetchError := errors.New("simulated initial fetch/summary error")
+
 	tests := []struct {
 		name               string
-		fetcher            EmailFetcher
-		summarizer         Summarizer
+		inputStories       []Story // Stories to pass directly to the handler
+		inputError         error   // Error to pass directly to the handler
 		expectedStatusCode int
 		expectedBody       string // Expected JSON string
 	}{
 		{
-			name:               "fetch emails error",
-			fetcher:            mockEmailFetcher(0, errors.New("fetch failed")),
-			summarizer:         &mockSummarizer{},
+			name:               "initial fetch or summarization error",
+			inputStories:       nil,
+			inputError:         simulatedInitialFetchError,
 			expectedStatusCode: http.StatusInternalServerError,
-			expectedBody:       "Failed to fetch or summarize emails: error fetching emails: fetch failed\n",
+			expectedBody:       "Failed to fetch or summarize emails: simulated initial fetch/summary error\n",
 		},
 		{
-			name:               "no emails found",
-			fetcher:            mockEmailFetcher(0, nil),
-			summarizer:         &mockSummarizer{},
+			name:               "no stories available after successful initial processing",
+			inputStories:       []Story{},
+			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "[]\n",
 		},
 		{
-			name:    "multiple emails with stories",
-			fetcher: mockEmailFetcher(2, nil),
-			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
-				if text == "Body "+string(rune(1)) { // Corresponds to UID 1
-					return []Story{story1}, nil
-				}
-				if text == "Body "+string(rune(2)) { // Corresponds to UID 2
-					return []Story{story2}, nil
-				}
-				return nil, nil
-			}},
+			name:               "multiple stories available",
+			inputStories:       []Story{story1, story2},
+			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"},{"Headline":"Story 2","Teaser":"Teaser 2","URL":"http://example.com/2"}]` + "\n",
 		},
 		{
-			name:    "email with summarization error",
-			fetcher: mockEmailFetcher(2, nil), // Fetches 2 emails (UID 1, UID 2)
-			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
-				if text == "Body "+string(rune(1)) { // UID 1
-					return []Story{story1}, nil
-				}
-				if text == "Body "+string(rune(2)) { // UID 2 - this one will fail summarization
-					return nil, errors.New("summarization failed")
-				}
-				return nil, nil
-			}},
-			expectedStatusCode: http.StatusOK,
-			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n", // Only story1 should be present
-		},
-		{
-			name:    "one email generates stories, another generates none",
-			fetcher: mockEmailFetcher(2, nil), // Fetches 2 emails (UID 1, UID 2)
-			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
-				if text == "Body "+string(rune(1)) { // UID 1
-					return []Story{story1}, nil
-				}
-				if text == "Body "+string(rune(2)) { // UID 2 - generates no stories
-					return []Story{}, nil
-				}
-				return nil, nil
-			}},
+			name:               "single story available",
+			inputStories:       []Story{story1},
+			inputError:         nil,
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
-		},
-		{
-			name:    "all emails generate no stories",
-			fetcher: mockEmailFetcher(1, nil), // Fetches 1 email
-			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
-				return []Story{}, nil // All emails processed by this summarizer will return no stories
-			}},
-			expectedStatusCode: http.StatusOK,
-			expectedBody:       "[]\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create the handler using the test's fetcher and summarizer
-			// Note: newStoriesHandler is defined in main.go (will be added)
-			handler := newStoriesHandler(testCfg, tt.summarizer, tt.fetcher)
+			// newStoriesHandler now takes the pre-processed stories and error directly.
+			// testCfg, tt.summarizer, and tt.fetcher are no longer needed here.
+			handler := newStoriesHandler(tt.inputStories, tt.inputError)
 
 			req := httptest.NewRequest("GET", "/stories", nil)
 			rr := httptest.NewRecorder()

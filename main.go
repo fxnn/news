@@ -139,29 +139,27 @@ func main() {
 	if cfg.mode == "cli" {
 		processEmails(cfg, summarizer)
 	} else if cfg.mode == "server" {
-		startHttpServer(cfg, summarizer) // Pass summarizer to startHttpServer
+		// Fetch and summarize emails once at startup for server mode
+		log.Println("Server mode: Fetching and summarizing emails at startup...")
+		initialEmails, initialFetchErr := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer)
+		if initialFetchErr != nil {
+			// Log the error; the server will still start, but /stories will reflect this error.
+			log.Printf("WARN: Initial fetch and summary for server mode failed: %v", initialFetchErr)
+		} else {
+			log.Printf("Initial fetch and summary complete. Processed %d emails.", len(initialEmails))
+		}
+		startHttpServer(cfg, initialEmails, initialFetchErr)
 	}
 }
 
 // newStoriesHandler creates an HTTP handler for the /stories endpoint.
-// It uses the provided config, summarizer, and email fetcher.
-func newStoriesHandler(cfg config, summarizer Summarizer, fetcher EmailFetcher) http.HandlerFunc {
+// It uses pre-fetched stories and any error that occurred during the initial fetch.
+func newStoriesHandler(allStories []Story, fetchErr error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		emails, err := fetchAndSummarizeEmails(fetcher, cfg, summarizer)
-		if err != nil {
-			// Log the error server-side as well for more details if needed
-			log.Printf("ERROR: Failed to fetch or summarize emails for /stories: %v", err)
-			http.Error(w, fmt.Sprintf("Failed to fetch or summarize emails: %v", err), http.StatusInternalServerError)
+		if fetchErr != nil {
+			log.Printf("ERROR: Serving /stories, initial fetch/summary failed: %v", fetchErr)
+			http.Error(w, fmt.Sprintf("Failed to fetch or summarize emails: %v", fetchErr), http.StatusInternalServerError)
 			return
-		}
-
-		allStories := []Story{}
-		for _, email := range emails {
-			// Only include stories from emails that produced stories.
-			// Emails with summarization errors will have an empty Stories slice.
-			if len(email.Stories) > 0 {
-				allStories = append(allStories, email.Stories...)
-			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -179,14 +177,24 @@ func newStoriesHandler(cfg config, summarizer Summarizer, fetcher EmailFetcher) 
 }
 
 // startHttpServer starts the HTTP server with configured routes.
-// It now requires a Summarizer to pass to handlers.
-func startHttpServer(cfg config, summarizer Summarizer) {
+// It receives initially fetched emails and any error from that process.
+func startHttpServer(cfg config, initialEmails []Email, initialFetchErr error) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "HTTP server is running")
 	})
 
+	var allStoriesForHandler []Story
+	if initialFetchErr == nil { // Only extract stories if the initial fetch was successful
+		for _, email := range initialEmails {
+			// Only include stories from emails that produced stories.
+			if len(email.Stories) > 0 {
+				allStoriesForHandler = append(allStoriesForHandler, email.Stories...)
+			}
+		}
+	}
+
 	// Setup /stories handler
-	storiesHandler := newStoriesHandler(cfg, summarizer, FetchEmails) // Use the real FetchEmails
+	storiesHandler := newStoriesHandler(allStoriesForHandler, initialFetchErr)
 	http.HandleFunc("/stories", storiesHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.httpPort)
