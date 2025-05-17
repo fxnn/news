@@ -53,16 +53,6 @@ func TestStoriesHandler(t *testing.T) {
 		expectedBody       string // Expected JSON string
 	}{
 		{
-			name: "error during initial fetch (handler receives empty stories)",
-			// This simulates the scenario where main encountered an error during
-			// fetchAndSummarizeEmails, logged it, and then startHttpServer
-			// was called with empty emails, leading to newStoriesHandler
-			// receiving nil or an empty slice for inputStories.
-			inputStories:       nil,
-			expectedStatusCode: http.StatusOK,
-			expectedBody:       "[]\n",
-		},
-		{
 			name:               "no stories available after successful initial processing",
 			inputStories:       []Story{},
 			expectedStatusCode: http.StatusOK,

@@ -135,16 +135,9 @@ func main() {
 	// Fetch and summarize emails once, regardless of mode.
 	processedEmails, fetchErr := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer)
 	if fetchErr != nil {
-		log.Printf("ERROR: Failed to fetch and summarize emails: %v", fetchErr)
-		// For CLI mode, this is fatal.
-		if cfg.mode == "cli" {
-			log.Fatalf("Exiting due to email processing failure.")
-		}
-		// For server mode, continue with empty emails. The error is logged.
-		processedEmails = []Email{}
-	} else {
-		log.Printf("Successfully fetched and summarized %d emails.", len(processedEmails))
+		log.Fatalf("ERROR: Failed to fetch and summarize emails, exiting: %v", fetchErr)
 	}
+	log.Printf("Successfully fetched and summarized %d emails.", len(processedEmails))
 
 	if cfg.mode == "cli" {
 		processEmails(processedEmails)
