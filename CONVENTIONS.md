@@ -26,3 +26,7 @@ We implement a newsletter reading app in Golang.
 - Don't leave commented-out code in the files. No dead code.
 - Extract code into functions often. A function should do one thing.
   If you need to separate different aspects using comments, split it up.
+- Watch the placement of functions and types. Things that belong together should
+  go into the same file. But one file should do **one** thing. If there is no
+  common purpose within the file, split it up.
+
