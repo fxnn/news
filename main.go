@@ -1,12 +1,17 @@
 package main
 
 import (
+	"encoding/json" // Added for JSON marshalling
 	"flag"
 	"fmt"
 	"log"
 	"net/http" // Import net/http package
 	"strings"  // Import strings package
 )
+
+// EmailFetcher defines the signature for a function that fetches emails.
+// This allows for mocking in tests.
+type EmailFetcher func(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error)
 
 // config holds all the application configuration values derived from flags.
 type config struct {
@@ -69,11 +74,41 @@ func initializeSummarizer(summarizerType string) Summarizer {
 	return summarizer
 }
 
-// processEmails fetches, summarizes, and prints emails.
-func processEmails(cfg config, summarizer Summarizer) {
-	emails, err := FetchEmails(cfg.server, cfg.port, cfg.username, cfg.password, cfg.folder, cfg.days, true)
+// fetchAndSummarizeEmails fetches emails using the provided fetcher and then summarizes them.
+// Individual summarization errors are stored within the Email structs.
+// The top-level error is for critical issues like the fetcher failing.
+func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summarizer) ([]Email, error) {
+	// Assuming TLS true based on previous hardcoding in processEmails.
+	// This could be made configurable if needed.
+	useTLS := true
+
+	emails, err := fetcher(cfg.server, cfg.port, cfg.username, cfg.password, cfg.folder, cfg.days, useTLS)
 	if err != nil {
-		log.Fatalf("Error fetching emails: %v\n", err)
+		return nil, fmt.Errorf("error fetching emails: %w", err)
+	}
+
+	if len(emails) == 0 {
+		return []Email{}, nil
+	}
+
+	for i := range emails {
+		email := &emails[i] // Use pointer to modify the slice element
+		if email.Body != "" {
+			email.Stories, email.SummarizationError = summarizer.Summarize(email.Body)
+		} else {
+			email.Stories = []Story{} // Ensure Stories is not nil
+			email.SummarizationError = nil
+		}
+	}
+	return emails, nil
+}
+
+// processEmails fetches, summarizes, and prints emails for CLI mode.
+func processEmails(cfg config, summarizer Summarizer) {
+	emails, err := fetchAndSummarizeEmails(FetchEmails, cfg, summarizer) // Use the real FetchEmails
+	if err != nil {
+		// fetchAndSummarizeEmails already wraps the error from FetchEmails
+		log.Fatalf("Error processing emails: %v\n", err)
 	}
 
 	if len(emails) == 0 {
@@ -85,7 +120,7 @@ func processEmails(cfg config, summarizer Summarizer) {
 	for i := range emails {
 		email := &emails[i]
 
-		email.Stories, email.SummarizationError = summarizer.Summarize(email.Body)
+		// Log summarization errors if any occurred (already populated by fetchAndSummarizeEmails)
 		if email.SummarizationError != nil {
 			log.Printf("WARN: Failed to summarize email UID %d: %v", email.UID, email.SummarizationError)
 		}
@@ -97,20 +132,60 @@ func processEmails(cfg config, summarizer Summarizer) {
 
 func main() {
 	cfg := parseAndValidateFlags()
+	summarizer := initializeSummarizer(cfg.summarizerType) // Initialize summarizer once
 
 	if cfg.mode == "cli" {
-		summarizer := initializeSummarizer(cfg.summarizerType)
 		processEmails(cfg, summarizer)
 	} else if cfg.mode == "server" {
-		startHttpServer(cfg)
+		startHttpServer(cfg, summarizer) // Pass summarizer to startHttpServer
 	}
 }
 
-// startHttpServer starts a simple HTTP server.
-func startHttpServer(cfg config) {
+// newStoriesHandler creates an HTTP handler for the /stories endpoint.
+// It uses the provided config, summarizer, and email fetcher.
+func newStoriesHandler(cfg config, summarizer Summarizer, fetcher EmailFetcher) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		emails, err := fetchAndSummarizeEmails(fetcher, cfg, summarizer)
+		if err != nil {
+			// Log the error server-side as well for more details if needed
+			log.Printf("ERROR: Failed to fetch or summarize emails for /stories: %v", err)
+			http.Error(w, fmt.Sprintf("Failed to fetch or summarize emails: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		allStories := []Story{}
+		for _, email := range emails {
+			// Only include stories from emails that were successfully summarized
+			// and actually produced stories.
+			if email.SummarizationError == nil && len(email.Stories) > 0 {
+				allStories = append(allStories, email.Stories...)
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		// Ensure an empty JSON array "[]" is sent if allStories is empty, not "null".
+		if len(allStories) == 0 {
+			w.Write([]byte("[]\n")) // Add newline for consistency with Encode
+			return
+		}
+
+		if err := json.NewEncoder(w).Encode(allStories); err != nil {
+			log.Printf("ERROR: Failed to marshal stories to JSON: %v", err)
+			http.Error(w, fmt.Sprintf("Failed to marshal stories to JSON: %v", err), http.StatusInternalServerError)
+		}
+	}
+}
+
+// startHttpServer starts the HTTP server with configured routes.
+// It now requires a Summarizer to pass to handlers.
+func startHttpServer(cfg config, summarizer Summarizer) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "HTTP server is running")
 	})
+
+	// Setup /stories handler
+	storiesHandler := newStoriesHandler(cfg, summarizer, FetchEmails) // Use the real FetchEmails
+	http.HandleFunc("/stories", storiesHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.httpPort)
 	log.Printf("Starting HTTP server on %s\n", addr)

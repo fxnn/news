@@ -1,11 +1,163 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 )
+
+// mockSummarizer allows mocking the Summarizer interface for tests.
+type mockSummarizer struct {
+	SummarizeFunc func(text string) ([]Story, error)
+}
+
+func (m *mockSummarizer) Summarize(text string) ([]Story, error) {
+	if m.SummarizeFunc != nil {
+		return m.SummarizeFunc(text)
+	}
+	// Default behavior: return a single mock story if not customized.
+	return []Story{{Headline: "Mock Story", Teaser: "Default mock teaser", URL: "http://example.com/mock"}}, nil
+}
+
+// mockEmailFetcher creates a mock EmailFetcher function for testing.
+// It allows specifying the emails and error to return.
+func mockEmailFetcher(emailsToReturn []Email, errorToReturn error) EmailFetcher {
+	return func(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
+		return emailsToReturn, errorToReturn
+	}
+}
+
+func TestStoriesHandler(t *testing.T) {
+	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+	testCfg := config{ // Basic config for tests, specific fields overridden as needed
+		server:   "test.imap.com",
+		port:     993,
+		username: "user",
+		password: "password",
+		folder:   "INBOX",
+		days:     7,
+	}
+
+	story1 := Story{Headline: "Story 1", Teaser: "Teaser 1", URL: "http://example.com/1"}
+	story2 := Story{Headline: "Story 2", Teaser: "Teaser 2", URL: "http://example.com/2"}
+
+	email1 := Email{UID: 1, Subject: "Email 1", Body: "Body 1", Date: fixedTime, Stories: []Story{story1}}
+	email2 := Email{UID: 2, Subject: "Email 2", Body: "Body 2", Date: fixedTime, Stories: []Story{story2}}
+	emailWithSummarizationError := Email{UID: 3, Subject: "Email 3", Body: "Body 3", Date: fixedTime, SummarizationError: errors.New("summarization failed")}
+	emailNoStories := Email{UID: 4, Subject: "Email 4", Body: "Body 4", Date: fixedTime, Stories: []Story{}}
+
+	tests := []struct {
+		name               string
+		fetcher            EmailFetcher
+		summarizer         Summarizer
+		expectedStatusCode int
+		expectedBody       string // Expected JSON string
+	}{
+		{
+			name:               "fetch emails error",
+			fetcher:            mockEmailFetcher(nil, errors.New("fetch failed")),
+			summarizer:         &mockSummarizer{},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedBody:       "Failed to fetch or summarize emails: error fetching emails: fetch failed\n",
+		},
+		{
+			name:               "no emails found",
+			fetcher:            mockEmailFetcher([]Email{}, nil),
+			summarizer:         &mockSummarizer{},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "[]\n",
+		},
+		{
+			name:    "multiple emails with stories",
+			fetcher: mockEmailFetcher([]Email{email1, email2}, nil), // Stories are pre-set in mock emails for simplicity here
+			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
+				if text == "Body 1" {
+					return []Story{story1}, nil
+				}
+				if text == "Body 2" {
+					return []Story{story2}, nil
+				}
+				return nil, nil
+			}},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"},{"Headline":"Story 2","Teaser":"Teaser 2","URL":"http://example.com/2"}]` + "\n",
+		},
+		{
+			name:    "email with summarization error",
+			fetcher: mockEmailFetcher([]Email{email1, emailWithSummarizationError}, nil),
+			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
+				if text == "Body 1" {
+					return []Story{story1}, nil
+				}
+				if text == "Body 3" { // This email will have SummarizationError set by fetchAndSummarizeEmails
+					return nil, errors.New("summarization failed")
+				}
+				return nil, nil
+			}},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
+		},
+		{
+			name:    "email generates no stories",
+			fetcher: mockEmailFetcher([]Email{email1, emailNoStories}, nil),
+			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
+				if text == "Body 1" {
+					return []Story{story1}, nil
+				}
+				if text == "Body 4" { // This email will have empty Stories set by fetchAndSummarizeEmails
+					return []Story{}, nil
+				}
+				return nil, nil
+			}},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
+		},
+		{
+			name:    "all emails generate no stories",
+			fetcher: mockEmailFetcher([]Email{emailNoStories}, nil),
+			summarizer: &mockSummarizer{SummarizeFunc: func(text string) ([]Story, error) {
+				return []Story{}, nil
+			}},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "[]\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create the handler using the test's fetcher and summarizer
+			// Note: newStoriesHandler is defined in main.go (will be added)
+			handler := newStoriesHandler(testCfg, tt.summarizer, tt.fetcher)
+
+			req := httptest.NewRequest("GET", "/stories", nil)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != tt.expectedStatusCode {
+				t.Errorf("handler returned wrong status code: got %v want %v. Body: %s",
+					status, tt.expectedStatusCode, rr.Body.String())
+			}
+
+			// Normalize newlines for body comparison, as http.Error might add a newline.
+			gotBody := strings.ReplaceAll(rr.Body.String(), "\r\n", "\n")
+			expectedBody := strings.ReplaceAll(tt.expectedBody, "\r\n", "\n")
+
+			if gotBody != expectedBody {
+				t.Errorf("handler returned unexpected body: got \n%q\n want \n%q",
+					gotBody, expectedBody)
+			}
+
+			if tt.expectedStatusCode == http.StatusOK && rr.Header().Get("Content-Type") != "application/json" {
+				t.Errorf("handler returned wrong content type: got %v want application/json", rr.Header().Get("Content-Type"))
+			}
+		})
+	}
+}
 
 func TestCreateBodyPreview(t *testing.T) {
 	tests := []struct {
