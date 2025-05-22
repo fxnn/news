@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"         // Import embed package
 	"encoding/json" // Added for JSON marshalling
 	"flag"
 	"fmt"
@@ -9,6 +10,9 @@ import (
 	"strings"  // Import strings package
 	"time"     // Import time package
 )
+
+//go:embed index.html
+var indexHTML embed.FS
 
 // EmailFetcher defines the signature for a function that fetches emails.
 // This allows for mocking in tests.
@@ -174,7 +178,15 @@ func newStoriesHandler(allStories []Story) http.HandlerFunc {
 // It receives the already fetched and summarized emails.
 func startHttpServer(cfg config, emails []Email) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "HTTP server is running")
+		// Serve the embedded index.html file
+		htmlContent, err := indexHTML.ReadFile("index.html")
+		if err != nil {
+			log.Printf("ERROR: could not read embedded index.html: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(htmlContent)
 	})
 
 	var allStoriesForHandler []Story

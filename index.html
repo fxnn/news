@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Stories</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1 { text-align: center; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .story { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+        .story:last-child { border-bottom: none; }
+        .story h2 { margin-top: 0; color: #0056b3; }
+        .story p { margin-bottom: 5px; }
+        .story a { color: #007bff; text-decoration: none; }
+        .story a:hover { text-decoration: underline; }
+        #error-message { color: red; text-align: center; }
+        #loading-message { text-align: center; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Latest Newsletter Stories</h1>
+        <div id="loading-message">Loading stories...</div>
+        <div id="error-message"></div>
+        <div id="stories-container">
+            <!-- Stories will be injected here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const storiesContainer = document.getElementById('stories-container');
+            const errorMessageDiv = document.getElementById('error-message');
+            const loadingMessageDiv = document.getElementById('loading-message');
+
+            fetch('/stories')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(stories => {
+                    loadingMessageDiv.style.display = 'none'; // Hide loading message
+                    if (stories && stories.length > 0) {
+                        stories.forEach(story => {
+                            const storyElement = document.createElement('div');
+                            storyElement.classList.add('story');
+
+                            const headline = document.createElement('h2');
+                            headline.textContent = story.Headline;
+                            storyElement.appendChild(headline);
+
+                            const teaser = document.createElement('p');
+                            teaser.textContent = story.Teaser;
+                            storyElement.appendChild(teaser);
+
+                            if (story.URL) {
+                                const urlLink = document.createElement('a');
+                                urlLink.href = story.URL;
+                                urlLink.textContent = 'Read more';
+                                urlLink.target = '_blank'; // Open in new tab
+                                storyElement.appendChild(urlLink);
+                            }
+                            storiesContainer.appendChild(storyElement);
+                        });
+                    } else {
+                        storiesContainer.textContent = 'No stories available at the moment.';
+                    }
+                })
+                .catch(error => {
+                    loadingMessageDiv.style.display = 'none'; // Hide loading message
+                    console.error('Error fetching stories:', error);
+                    errorMessageDiv.textContent = 'Failed to load stories. Please try again later.';
+                });
+        });
+    </script>
+</body>
+</html>
