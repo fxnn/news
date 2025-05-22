@@ -16,7 +16,7 @@ var indexHTML embed.FS
 
 // EmailFetcher defines the signature for a function that fetches emails.
 // This allows for mocking in tests.
-type EmailFetcher func(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error)
+type EmailFetcher func(server string, port int, username, password, folder string, days int, tls bool, limit int) ([]Email, error)
 
 // config holds all the application configuration values derived from flags.
 type config struct {
@@ -26,6 +26,7 @@ type config struct {
 	password       string
 	folder         string
 	days           int
+	limit          int // Max number of emails to fetch, -1 for no limit
 	summarizerType string
 	mode           string // Application mode: "cli" or "server"
 	httpPort       int    // Port for HTTP server mode
@@ -41,6 +42,7 @@ func parseAndValidateFlags() config {
 	flag.StringVar(&cfg.password, "password", "", "Email password (required)")
 	flag.StringVar(&cfg.folder, "folder", "INBOX", "Email folder to search")
 	flag.IntVar(&cfg.days, "days", 7, "Number of days to look back")
+	flag.IntVar(&cfg.limit, "limit", -1, "Limit the number of emails to fetch (-1 for no limit)")
 	flag.StringVar(&cfg.summarizerType, "summarizer", "stub", "Summarizer type ('stub' or 'langchain')")
 	flag.StringVar(&cfg.mode, "mode", "cli", "Application mode ('cli' or 'server')")
 	flag.IntVar(&cfg.httpPort, "http-port", 8080, "Port for HTTP server (if mode is 'server')")
@@ -87,7 +89,7 @@ func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summar
 	// This could be made configurable if needed.
 	useTLS := true
 
-	emails, err := fetcher(cfg.server, cfg.port, cfg.username, cfg.password, cfg.folder, cfg.days, useTLS)
+	emails, err := fetcher(cfg.server, cfg.port, cfg.username, cfg.password, cfg.folder, cfg.days, useTLS, cfg.limit)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching emails: %w", err)
 	}

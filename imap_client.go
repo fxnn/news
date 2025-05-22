@@ -12,8 +12,9 @@ import (
 	// (Dropped html2text import; we’ll just return raw HTML when no text/plain part is present.)
 )
 
-// FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range.
-func FetchEmails(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
+// FetchEmails connects to the IMAP server, selects the folder, and fetches emails within the specified date range,
+// optionally limiting the number of messages.
+func FetchEmails(server string, port int, username, password, folder string, days int, tls bool, limit int) ([]Email, error) {
 	// Connect to server
 	addr := fmt.Sprintf("%s:%d", server, port)
 
@@ -60,10 +61,25 @@ func FetchEmails(server string, port int, username, password, folder string, day
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for messages: %w", err)
 	}
-	log.Printf("Found %d messages\n", len(uids))
 
 	if len(uids) == 0 {
+		log.Println("No messages found matching criteria.")
 		return []Email{}, nil // No messages found
+	}
+	log.Printf("Found %d messages matching date criteria\n", len(uids))
+
+	// Apply limit if specified and positive
+	// We take the last 'limit' UIDs, assuming higher UIDs are generally newer.
+	// This is a common behavior but not strictly guaranteed by IMAP for "latest".
+	if limit > 0 && len(uids) > limit {
+		originalCount := len(uids)
+		uids = uids[len(uids)-limit:]
+		log.Printf("Applied limit: selected %d newest messages from %d found\n", len(uids), originalCount)
+	}
+
+	if len(uids) == 0 { // Can happen if limit was 0
+		log.Println("No messages to fetch after applying limit.")
+		return []Email{}, nil
 	}
 
 	// Create sequence set for fetching

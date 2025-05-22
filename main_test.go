@@ -22,19 +22,31 @@ func (m *mockSummarizer) Summarize(text string) ([]Story, error) {
 }
 
 // mockEmailFetcher creates a mock EmailFetcher function for testing.
-// It generates a specified number of dummy emails or returns an error.
-func mockEmailFetcher(numEmails int, errorToReturn error) EmailFetcher {
-	return func(server string, port int, username, password, folder string, days int, tls bool) ([]Email, error) {
+// It generates a specified number of dummy emails (numEmailsToGenerate),
+// respecting the limit, or returns an error.
+func mockEmailFetcher(numEmailsToGenerate int, errorToReturn error) EmailFetcher {
+	return func(server string, port int, username, password, folder string, days int, tls bool, limit int) ([]Email, error) {
 		if errorToReturn != nil {
 			return nil, errorToReturn
 		}
-		emails := make([]Email, numEmails)
-		for i := 0; i < numEmails; i++ {
+
+		numToReturn := numEmailsToGenerate
+		// Apply limit if it's positive and less than the number of emails we would generate
+		if limit >= 0 && limit < numEmailsToGenerate {
+			numToReturn = limit
+		}
+		// If limit is -1, numToReturn remains numEmailsToGenerate (no limit)
+
+		emails := make([]Email, numToReturn)
+		for i := 0; i < numToReturn; i++ {
+			// Create unique subjects/bodies for easier debugging if needed
+			subject := fmt.Sprintf("Mock Subject %d (Limit %d)", i+1, limit)
+			body := fmt.Sprintf("Mock Body %d for email %d (Limit %d)", i+1, i+1, limit)
 			emails[i] = Email{
-				UID:     uint32(i + 1),
-				Subject: "Subject " + string(rune(i+1)),
-				Body:    "Body " + string(rune(i+1)), // Simple body for identification
-				Date:    time.Now(),
+				UID:     uint32(i + 1), // Mock UIDs are simple sequence
+				Subject: subject,
+				Body:    body,
+				Date:    time.Now().Add(-time.Hour * time.Duration(i)), // Slightly different dates
 			}
 		}
 		return emails, nil

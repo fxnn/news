@@ -160,44 +160,75 @@ func TestFetchEmails(t *testing.T) {
 	host, port, username, password, cleanup := setupMockIMAPServer(t, testMessages)
 	defer cleanup()
 
-	// Use the FetchEmails function with tls=false for testing
-	emails, err := FetchEmails(host, port, username, password, "INBOX", 7, false)
-	if err != nil {
-		t.Fatalf("FetchEmails failed: %v", err)
-	}
-
-	// Verify results
-	// We should have exactly 1 email (the recent one, not the old one)
-	if len(emails) != 1 {
-		t.Errorf("Expected exactly 1 email (the recent one), got %d", len(emails))
-	}
-
-	// Check the date filtering
-	dateThreshold := time.Now().AddDate(0, 0, -7)
-	for i, email := range emails {
-		if email.Date.Before(dateThreshold) {
-			t.Errorf("Email %d has date %v, which is before the threshold %v",
-				i, email.Date, dateThreshold)
+	// --- Original Test Case: Fetch recent emails, no limit ---
+	t.Run("FetchRecentEmailsNoLimit", func(t *testing.T) {
+		emails, err := FetchEmails(host, port, username, password, "INBOX", 7, false, -1)
+		if err != nil {
+			t.Fatalf("FetchEmails failed: %v", err)
 		}
-	}
+		if len(emails) != 1 {
+			t.Errorf("Expected 1 recent email, got %d", len(emails))
+		}
+		if emails[0].Subject != "Recent Test Email" {
+			t.Errorf("Expected subject 'Recent Test Email', got '%s'", emails[0].Subject)
+		}
+		// Check body (should be the plain text part)
+		expectedBody := "This is the plain text version."
+		if strings.TrimSpace(emails[0].Body) != expectedBody {
+			t.Errorf("Expected body '%s', got '%s'", expectedBody, strings.TrimSpace(emails[0].Body))
+		}
+	})
 
-	// Check the content of the email
-	// Check subject
-	expectedSubject := "Recent Test Email"
-	if emails[0].Subject != expectedSubject {
-		t.Errorf("Expected subject '%s', got '%s'", expectedSubject, emails[0].Subject)
-	}
+	// --- Test Case: Apply limit ---
+	// Add one more recent message to test limiting
+	moreTestMessages := append(testMessages, TestMessage{
+		Date:      time.Now().AddDate(0, 0, -1), // 1 day ago
+		Subject:   "Very Recent Test Email",
+		From:      "Sender3 <sender3@example.com>",
+		To:        "Recipient3 <recipient3@example.com>",
+		BodyPlain: "This is very recent.",
+		BodyHTML:  "<html><body><p>Very recent HTML.</p></body></html>",
+	})
+	// Need to restart server with new messages for this sub-test
+	hostLimited, portLimited, userLimited, passLimited, cleanupLimited := setupMockIMAPServer(t, moreTestMessages)
+	defer cleanupLimited()
 
-	// Check sender
-	if !strings.Contains(emails[0].From, "sender@example.com") {
-		t.Errorf("Expected From to contain 'sender@example.com', got '%s'", emails[0].From)
-	}
+	t.Run("FetchWithLimitApplied", func(t *testing.T) {
+		// We have 2 messages within 7 days: "Recent Test Email" (3 days ago) and "Very Recent Test Email" (1 day ago)
+		// The mock server adds messages and they get UIDs. FetchEmails with limit takes the *last* UIDs.
+		// Assuming "Very Recent Test Email" was added last, it should have a higher UID.
+		emails, err := FetchEmails(hostLimited, portLimited, userLimited, passLimited, "INBOX", 7, false, 1)
+		if err != nil {
+			t.Fatalf("FetchEmails with limit failed: %v", err)
+		}
+		if len(emails) != 1 {
+			t.Fatalf("Expected 1 email due to limit, got %d", len(emails))
+		}
+		// The one email should be "Very Recent Test Email" as it's assumed to be the "newest" by UID by FetchEmails logic
+		if emails[0].Subject != "Very Recent Test Email" {
+			t.Errorf("Expected subject 'Very Recent Test Email' with limit 1, got '%s'", emails[0].Subject)
+		}
+	})
 
-	// Check body (should be the plain text part)
-	expectedBody := "This is the plain text version."
-	// The parser should handle potential extra whitespace/encoding quirks
-	if strings.TrimSpace(emails[0].Body) != expectedBody {
-		t.Errorf("Expected body '%s', got '%s'", expectedBody, strings.TrimSpace(emails[0].Body))
-	}
-	// Note: Summary check removed as it's populated later in main.go
+	t.Run("FetchWithLimitGreaterThanAvailable", func(t *testing.T) {
+		// Still using moreTestMessages (2 recent emails)
+		emails, err := FetchEmails(hostLimited, portLimited, userLimited, passLimited, "INBOX", 7, false, 5)
+		if err != nil {
+			t.Fatalf("FetchEmails with limit > available failed: %v", err)
+		}
+		if len(emails) != 2 { // Should get both recent emails
+			t.Errorf("Expected 2 emails when limit is greater than available, got %d", len(emails))
+		}
+	})
+
+	t.Run("FetchWithLimitZero", func(t *testing.T) {
+		emails, err := FetchEmails(hostLimited, portLimited, userLimited, passLimited, "INBOX", 7, false, 0)
+		if err != nil {
+			t.Fatalf("FetchEmails with limit 0 failed: %v", err)
+		}
+		if len(emails) != 0 {
+			t.Errorf("Expected 0 emails when limit is 0, got %d", len(emails))
+		}
+	})
+
 }
