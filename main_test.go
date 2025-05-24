@@ -19,6 +19,7 @@ func (m *mockSummarizer) Summarize(text string) ([]Story, error) {
 		return m.SummarizeFunc(text)
 	}
 	// Default behavior: return a single mock story if not customized.
+	// Note: Source and PublishedDate are populated by fetchAndSummarizeEmails, not by the summarizer itself.
 	return []Story{{Headline: "Mock Story", Teaser: "Default mock teaser", URL: "http://example.com/mock"}}, nil
 }
 
@@ -55,8 +56,12 @@ func mockEmailFetcher(numEmailsToGenerate int, errorToReturn error) EmailFetcher
 }
 
 func TestStoriesHandler(t *testing.T) {
-	story1 := Story{Headline: "Story 1", Teaser: "Teaser 1", URL: "http://example.com/1"}
-	story2 := Story{Headline: "Story 2", Teaser: "Teaser 2", URL: "http://example.com/2"}
+	// Fixed date for consistent test output
+	testDate := time.Date(2024, time.May, 15, 10, 30, 0, 0, time.UTC)
+	testSource := "sender@example.com"
+
+	story1 := Story{Headline: "Story 1", Teaser: "Teaser 1", URL: "http://example.com/1", Source: testSource, PublishedDate: testDate}
+	story2 := Story{Headline: "Story 2", Teaser: "Teaser 2", URL: "http://example.com/2", Source: testSource, PublishedDate: testDate}
 
 	// This error simulates an error that would be returned by fetchAndSummarizeEmails
 	tests := []struct {
@@ -75,13 +80,13 @@ func TestStoriesHandler(t *testing.T) {
 			name:               "multiple stories available",
 			inputStories:       []Story{story1, story2},
 			expectedStatusCode: http.StatusOK,
-			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"},{"Headline":"Story 2","Teaser":"Teaser 2","URL":"http://example.com/2"}]` + "\n",
+			expectedBody:       fmt.Sprintf(`[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1","Source":"%s","PublishedDate":"%s"},{"Headline":"Story 2","Teaser":"Teaser 2","URL":"http://example.com/2","Source":"%s","PublishedDate":"%s"}]`+"\n", testSource, testDate.Format(time.RFC3339Nano), testSource, testDate.Format(time.RFC3339Nano)),
 		},
 		{
 			name:               "single story available",
 			inputStories:       []Story{story1},
 			expectedStatusCode: http.StatusOK,
-			expectedBody:       `[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1"}]` + "\n",
+			expectedBody:       fmt.Sprintf(`[{"Headline":"Story 1","Teaser":"Teaser 1","URL":"http://example.com/1","Source":"%s","PublishedDate":"%s"}]`+"\n", testSource, testDate.Format(time.RFC3339Nano)),
 		},
 	}
 
@@ -206,27 +211,31 @@ func TestFormatEmailDetails(t *testing.T) {
 				To:      "receiver@example.com",
 				Body:    sampleBody,
 				Stories: []Story{
-					{Headline: "Story 1", Teaser: "Teaser for story 1.", URL: "http://example.com/story1"},
-					{Headline: "Story 2", Teaser: "Teaser for story 2.", URL: "http://example.com/story2"},
+					{Headline: "Story 1", Teaser: "Teaser for story 1.", URL: "http://example.com/story1", Source: "sender@example.com", PublishedDate: testDate},
+					{Headline: "Story 2", Teaser: "Teaser for story 2.", URL: "http://example.com/story2", Source: "sender@example.com", PublishedDate: testDate},
 				},
 			},
-			want: `
+			want: fmt.Sprintf(`
 === Message ===
 UID: 101
 Date: 2024-05-15 10:30:00 +0000 UTC
 Subject: Multiple Updates
 From: sender@example.com
 To: receiver@example.com
-Body Preview: ` + expectedPreview + `
+Body Preview: %s
 --- Story 1 ---
 Headline: Story 1
 Teaser: Teaser for story 1.
 URL: http://example.com/story1
+Source: sender@example.com
+Published: %s
 --- Story 2 ---
 Headline: Story 2
 Teaser: Teaser for story 2.
 URL: http://example.com/story2
-`,
+Source: sender@example.com
+Published: %s
+`, expectedPreview, testDate.Format(time.RFC1123Z), testDate.Format(time.RFC1123Z)),
 		},
 		{
 			name: "Email with one story, no URL",
@@ -238,22 +247,24 @@ URL: http://example.com/story2
 				To:      "receiver@example.com",
 				Body:    sampleBody,
 				Stories: []Story{
-					{Headline: "Important News", Teaser: "Just one important thing.", URL: ""},
+					{Headline: "Important News", Teaser: "Just one important thing.", URL: "", Source: "sender@example.com", PublishedDate: testDate},
 				},
 			},
-			want: `
+			want: fmt.Sprintf(`
 === Message ===
 UID: 102
 Date: 2024-05-15 10:30:00 +0000 UTC
 Subject: Single Update
 From: sender@example.com
 To: receiver@example.com
-Body Preview: ` + expectedPreview + `
+Body Preview: %s
 --- Story 1 ---
 Headline: Important News
 Teaser: Just one important thing.
 URL: 
-`,
+Source: sender@example.com
+Published: %s
+`, expectedPreview, testDate.Format(time.RFC1123Z)),
 		},
 		{
 			name: "Email with no stories (successful summarization, empty result)",
@@ -309,22 +320,24 @@ Body Preview: ` + expectedPreview + `
 				To:      "receiver@example.com",
 				Body:    sampleBody,
 				Stories: []Story{
-					{Headline: "", Teaser: "Teaser for story.", URL: "http://example.com/storyX"},
+					{Headline: "", Teaser: "Teaser for story.", URL: "http://example.com/storyX", Source: "sender@example.com", PublishedDate: testDate},
 				},
 			},
-			want: `
+			want: fmt.Sprintf(`
 === Message ===
 UID: 105
 Date: 2024-05-15 10:30:00 +0000 UTC
 Subject: Update with no headline
 From: sender@example.com
 To: receiver@example.com
-Body Preview: ` + expectedPreview + `
+Body Preview: %s
 --- Story 1 ---
 Headline: 
 Teaser: Teaser for story.
 URL: http://example.com/storyX
-`,
+Source: sender@example.com
+Published: %s
+`, expectedPreview, testDate.Format(time.RFC1123Z)),
 		},
 	}
 

@@ -4,9 +4,11 @@ import "time"
 
 // Story represents a single news item or section extracted from an email.
 type Story struct {
-	Headline string
-	Teaser   string
-	URL      string
+	Headline      string
+	Teaser        string
+	URL           string
+	Source        string    // Source of the news story (e.g., email From field)
+	PublishedDate time.Time // Date the story was published (e.g., email Date field)
 }
 
 // Email represents the structure of a fetched email.

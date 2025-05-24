@@ -109,7 +109,14 @@ func fetchAndSummarizeEmails(fetcher EmailFetcher, cfg config, summarizer Summar
 				log.Printf("WARN: Failed to summarize email UID %d, Subject '%s': %v", email.UID, email.Subject, err)
 				email.Stories = []Story{} // Ensure Stories is an empty slice on error
 			} else {
-				email.Stories = stories
+				// Populate Source and PublishedDate for each story
+				processedStories := make([]Story, len(stories))
+				for k, story := range stories {
+					processedStories[k] = story
+					processedStories[k].Source = email.From
+					processedStories[k].PublishedDate = email.Date
+				}
+				email.Stories = processedStories
 			}
 			log.Printf("INFO: Processed summary for email UID %d (Date: %s, From: %s) in %v", email.UID, email.Date.Format("2006-01-02"), email.From, duration)
 		} else {
@@ -237,6 +244,8 @@ func formatEmailDetails(email *Email) string {
 			sb.WriteString(fmt.Sprintf("Headline: %s\n", story.Headline))
 			sb.WriteString(fmt.Sprintf("Teaser: %s\n", story.Teaser))
 			sb.WriteString(fmt.Sprintf("URL: %s\n", story.URL))
+			sb.WriteString(fmt.Sprintf("Source: %s\n", story.Source))
+			sb.WriteString(fmt.Sprintf("Published: %s\n", story.PublishedDate.Format(time.RFC1123Z)))
 		}
 	}
 	return sb.String()
