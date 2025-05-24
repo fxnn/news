@@ -1,3 +1,7 @@
+# HINT: `just` is a `make` replacement,
+# see https://just.systems/
+#
+
 help: # first target is the default when running `just`
   @just --list
 
