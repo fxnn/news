@@ -14,7 +14,7 @@ build:
 fmt:
   go fmt .
 
-lint:
+lint target='': # go vet doesn't accept individual filenames, but aider wants to give them
   go vet .
 
 test:
