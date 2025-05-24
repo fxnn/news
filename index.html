@@ -12,6 +12,7 @@
         .story:last-child { border-bottom: none; }
         .story h2 { margin-top: 0; color: #0056b3; }
         .story p { margin-bottom: 5px; }
+        .story .story-meta { color: #777; font-size: 0.9em; margin-bottom: 10px; } /* New style for source/date */
         .story a { color: #007bff; text-decoration: none; }
         .story a:hover { text-decoration: underline; }
         #error-message { color: red; text-align: center; }
@@ -52,23 +53,24 @@
                             headline.textContent = story.Headline;
                             storyElement.appendChild(headline);
 
+                            // Create a single paragraph for source and date
+                            const metaPara = document.createElement('p');
+                            metaPara.classList.add('story-meta');
+                            let metaText = [];
+                            if (story.Source) {
+                                metaText.push(`Source: ${story.Source}`);
+                            }
+                            if (story.PublishedDate) {
+                                metaText.push(`Published: ${new Date(story.PublishedDate).toLocaleString()}`);
+                            }
+                            if (metaText.length > 0) {
+                                metaPara.textContent = metaText.join(' | ');
+                                storyElement.appendChild(metaPara);
+                            }
+
                             const teaser = document.createElement('p');
                             teaser.textContent = story.Teaser;
                             storyElement.appendChild(teaser);
-
-                            if (story.Source) {
-                                const sourcePara = document.createElement('p');
-                                sourcePara.textContent = `Source: ${story.Source}`;
-                                storyElement.appendChild(sourcePara);
-                            }
-
-                            if (story.PublishedDate) {
-                                const datePara = document.createElement('p');
-                                // Format date for better readability, or use as is if specific formatting isn't required yet.
-                                // For now, using toLocaleString for a more user-friendly format.
-                                datePara.textContent = `Published: ${new Date(story.PublishedDate).toLocaleString()}`;
-                                storyElement.appendChild(datePara);
-                            }
 
                             if (story.URL) {
                                 const urlLink = document.createElement('a');
