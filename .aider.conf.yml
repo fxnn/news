@@ -9,7 +9,6 @@ read:
 
 auto-test: true
 test-cmd: just test
-lint: true
 lint-cmd: just lint
 
 # in git commits, attribute Aider using Co-Authored-By: trailers
