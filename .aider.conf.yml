@@ -1,0 +1,17 @@
+# see https://aider.chat/docs/config/aider_conf.html
+#
+
+model: gemini-2.5-pro
+#model: o4-mini
+
+read:
+- CONVENTIONS.md
+
+auto-test: true
+test-cmd: just test
+lint: true
+lint-cmd: just lint
+
+# in git commits, attribute Aider using Co-Authored-By: trailers
+attribute-co-authored-by: true
+

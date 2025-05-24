@@ -1,6 +1,15 @@
+#
+# tools and IDEs
 .vscode/
 .ra-aid/
 .local/
-news
+
 .aider*
+!.aider.conf.yml
+
+# build results 
+news
+
+# os specifics
 .DS_Store
+

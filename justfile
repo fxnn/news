@@ -5,7 +5,8 @@
 help: # first target is the default when running `just`
   @just --list
 
-make: fmt vet build test
+# includes format, lint, build, test
+make: fmt lint build test
 
 build:
   go build .
@@ -13,7 +14,7 @@ build:
 fmt:
   go fmt .
 
-vet:
+lint:
   go vet .
 
 test:
