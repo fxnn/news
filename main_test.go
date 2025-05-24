@@ -258,10 +258,10 @@ URL:
 		{
 			name: "Email with no stories (successful summarization, empty result)",
 			email: Email{
-				UID:                103,
-				Date:               testDate,
-				Subject:            "Empty Summary",
-				From:               "sender@example.com",
+				UID:     103,
+				Date:    testDate,
+				Subject: "Empty Summary",
+				From:    "sender@example.com",
 				To:      "receiver@example.com",
 				Body:    sampleBody,
 				Stories: []Story{},
@@ -280,10 +280,10 @@ Body Preview: ` + expectedPreview + `
 		{
 			name: "Email with summarization error",
 			email: Email{
-				UID:                104,
-				Date:               testDate,
-				Subject:            "Failed Summary",
-				From:               "sender@example.com",
+				UID:     104,
+				Date:    testDate,
+				Subject: "Failed Summary",
+				From:    "sender@example.com",
 				To:      "receiver@example.com",
 				Body:    sampleBody,
 				Stories: []Story{}, // Representing a case where summarization might have failed or returned no stories
