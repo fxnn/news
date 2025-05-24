@@ -56,6 +56,20 @@
                             teaser.textContent = story.Teaser;
                             storyElement.appendChild(teaser);
 
+                            if (story.Source) {
+                                const sourcePara = document.createElement('p');
+                                sourcePara.textContent = `Source: ${story.Source}`;
+                                storyElement.appendChild(sourcePara);
+                            }
+
+                            if (story.PublishedDate) {
+                                const datePara = document.createElement('p');
+                                // Format date for better readability, or use as is if specific formatting isn't required yet.
+                                // For now, using toLocaleString for a more user-friendly format.
+                                datePara.textContent = `Published: ${new Date(story.PublishedDate).toLocaleString()}`;
+                                storyElement.appendChild(datePara);
+                            }
+
                             if (story.URL) {
                                 const urlLink = document.createElement('a');
                                 urlLink.href = story.URL;
