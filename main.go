@@ -30,6 +30,7 @@ type config struct {
 	summarizerType string
 	mode           string // Application mode: "cli" or "server"
 	httpPort       int    // Port for HTTP server mode
+	htmlFile       string // Path to an optional index.html file for server mode
 }
 
 // parseAndValidateFlags parses command line flags and validates required ones.
@@ -46,6 +47,7 @@ func parseAndValidateFlags() config {
 	flag.StringVar(&cfg.summarizerType, "summarizer", "stub", "Summarizer type ('stub' or 'langchain')")
 	flag.StringVar(&cfg.mode, "mode", "cli", "Application mode ('cli' or 'server')")
 	flag.IntVar(&cfg.httpPort, "http-port", 8080, "Port for HTTP server (if mode is 'server')")
+	flag.StringVar(&cfg.htmlFile, "html-file", "", "Path to index.html file (replaces embedded version if provided)")
 	flag.Parse()
 
 	if cfg.mode != "cli" && cfg.mode != "server" {
@@ -187,15 +189,22 @@ func newStoriesHandler(allStories []Story) http.HandlerFunc {
 // It receives the already fetched and summarized emails.
 func startHttpServer(cfg config, emails []Email) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Serve the embedded index.html file
-		htmlContent, err := indexHTML.ReadFile("index.html")
-		if err != nil {
-			log.Printf("ERROR: could not read embedded index.html: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+		if cfg.htmlFile != "" {
+			// Serve the specified HTML file from the filesystem
+			// Ensure the path is clean and prevent directory traversal issues.
+			// http.ServeFile handles this by cleaning the path.
+			http.ServeFile(w, r, cfg.htmlFile)
+		} else {
+			// Serve the embedded index.html file
+			htmlContent, err := indexHTML.ReadFile("index.html")
+			if err != nil {
+				log.Printf("ERROR: could not read embedded index.html: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(htmlContent)
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(htmlContent)
 	})
 
 	var allStoriesForHandler []Story
