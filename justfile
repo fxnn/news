@@ -20,6 +20,7 @@ lint target='': # go vet doesn't accept individual filenames, but aider wants to
 test:
   go test .
 
+# Run the application in server mode, sourcing arguments from NEWS_* environment variables
 run-server:
   @echo "Starting server with arguments from environment variables (e.g., NEWS_SERVER, NEWS_PORT, NEWS_USERNAME, NEWS_PASSWORD, etc.)..."
   go run . --mode server \
