@@ -2,6 +2,8 @@
 # see https://just.systems/
 #
 
+set dotenv-load := true
+
 help: # first target is the default when running `just`
   @just --list
 
