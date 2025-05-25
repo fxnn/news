@@ -8,6 +8,7 @@
         body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #000; }
         h1 { text-align: center; color: #000; font-family: serif; font-size: 1.5em; font-weight: normal; }
         .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border: 1px solid #000; }
+        .container hr { border: none; border-top: 1px solid #000; margin-top: 15px; margin-bottom: 15px; }
         .story { border-bottom: 1px solid #000; padding-bottom: 15px; margin-bottom: 15px; }
         .story:last-child { border-bottom: none; }
         .story h2 { margin-top: 0; color: #000; font-family: serif; }
@@ -48,6 +49,8 @@
                 .then(stories => {
                     loadingMessageDiv.style.display = 'none'; // Hide loading message
                     if (stories && stories.length > 0) {
+                        const hr = document.createElement('hr');
+                        storiesContainer.appendChild(hr);
                         stories.forEach(story => {
                             const storyElement = document.createElement('div');
                             storyElement.classList.add('story');
