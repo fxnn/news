@@ -12,10 +12,12 @@
         .story:last-child { border-bottom: none; }
         .story h2 { margin-top: 0; color: #000; font-family: serif; }
         .story p { margin-bottom: 5px; }
-        .story .story-meta { color: #777; font-size: 0.9em; margin-bottom: 10px; } /* New style for source/date */
+        .story .story-meta { color: #777; font-size: 0.9em; margin-bottom: 10px; } /* New style for source/date - will be removed by JS changes */
+        .story .story-source { font-size: 0.9em; color: #555; margin-bottom: 2px; } /* Style for the source line */
         .story a { color: #000; text-decoration: none; }
         .story a:hover { text-decoration: underline; }
         .read-more-link { font-weight: bold; font-family: serif; } /* Style for "Read more" links */
+        .inline-date { font-family: serif; font-size: 0.9em; color: #555; } /* Style for inline date */
         #error-message { color: #000; text-align: center; } /* Changed to black as per b/w scheme */
         #loading-message { text-align: center; font-style: italic; color: #000; }
     </style>
@@ -50,6 +52,13 @@
                             const storyElement = document.createElement('div');
                             storyElement.classList.add('story');
 
+                            if (story.Source) {
+                                const sourcePara = document.createElement('p');
+                                sourcePara.classList.add('story-source');
+                                sourcePara.textContent = story.Source;
+                                storyElement.appendChild(sourcePara);
+                            }
+
                             const headlineElement = document.createElement('h2');
                             if (story.URL) {
                                 const headlineLink = document.createElement('a');
@@ -62,37 +71,30 @@
                             }
                             storyElement.appendChild(headlineElement);
 
-                            // Create a single paragraph for source and date
-                            const metaPara = document.createElement('p');
-                            metaPara.classList.add('story-meta');
-                            let metaText = [];
-                            if (story.Source) {
-                                metaText.push(`Source: ${story.Source}`);
-                            }
-                            if (story.PublishedDate) {
-                                metaText.push(`Published: ${new Date(story.PublishedDate).toLocaleString()}`);
-                            }
-                            if (metaText.length > 0) {
-                                metaPara.textContent = metaText.join(' | ');
-                                storyElement.appendChild(metaPara);
+                            const teaserPara = document.createElement('p');
+                            // Add teaser text first
+                            if (story.Teaser) {
+                                teaserPara.appendChild(document.createTextNode(story.Teaser + ' '));
                             }
 
-                            const teaser = document.createElement('p');
-                            let teaserContent = story.Teaser;
+                            // Add formatted date if available
+                            if (story.PublishedDate) {
+                                const dateSpan = document.createElement('span');
+                                dateSpan.classList.add('inline-date');
+                                dateSpan.textContent = new Date(story.PublishedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) + '. ';
+                                teaserPara.appendChild(dateSpan);
+                            }
+
+                            // Add "Read more" link if URL exists
                             if (story.URL) {
-                                teaserContent += ' '; // Add a space before the link
                                 const urlLink = document.createElement('a');
                                 urlLink.href = story.URL;
                                 urlLink.textContent = 'Read more';
                                 urlLink.target = '_blank'; // Open in new tab
-                                urlLink.classList.add('read-more-link'); // Apply the new style
-                                // Append link HTML as string to teaser content for inline display
-                                teaser.innerHTML = teaserContent; // Use innerHTML to parse the <a> tag
-                                teaser.appendChild(urlLink); // Append the actual node
-                            } else {
-                                teaser.textContent = teaserContent;
+                                urlLink.classList.add('read-more-link'); // Apply the style
+                                teaserPara.appendChild(urlLink);
                             }
-                            storyElement.appendChild(teaser);
+                            storyElement.appendChild(teaserPara);
                             storiesContainer.appendChild(storyElement);
                         });
                     } else {
