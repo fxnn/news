@@ -29,4 +29,7 @@ We implement a newsletter reading app in Golang.
 - Watch the placement of functions and types. Things that belong together should
   go into the same file. But one file should do **one** thing. If there is no
   common purpose within the file, split it up.
-
+- Comment on the intention: why is that code there? What are purpose, context,
+  hidden dependencies, reasons?
+- Do not comment on the history. Do not comment "changed from struct to list" or
+  "add for new b/w color scheme".
