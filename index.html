@@ -15,6 +15,7 @@
         .story .story-meta { color: #777; font-size: 0.9em; margin-bottom: 10px; } /* New style for source/date */
         .story a { color: #000; text-decoration: none; }
         .story a:hover { text-decoration: underline; }
+        .read-more-link { font-weight: bold; font-family: serif; } /* Style for "Read more" links */
         #error-message { color: #000; text-align: center; } /* Changed to black as per b/w scheme */
         #loading-message { text-align: center; font-style: italic; color: #000; }
     </style>
@@ -84,6 +85,7 @@
                                 urlLink.href = story.URL;
                                 urlLink.textContent = 'Read more';
                                 urlLink.target = '_blank'; // Open in new tab
+                                urlLink.classList.add('read-more-link'); // Apply the new style
                                 // Append link HTML as string to teaser content for inline display
                                 teaser.innerHTML = teaserContent; // Use innerHTML to parse the <a> tag
                                 teaser.appendChild(urlLink); // Append the actual node
