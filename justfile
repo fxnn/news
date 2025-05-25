@@ -21,16 +21,16 @@ test:
   go test .
 
 run-server:
-  @echo "Starting server with arguments from environment variables (e.g., FLAG_SERVER, FLAG_PORT, FLAG_USERNAME, FLAG_PASSWORD, etc.)..."
+  @echo "Starting server with arguments from environment variables (e.g., NEWS_SERVER, NEWS_PORT, NEWS_USERNAME, NEWS_PASSWORD, etc.)..."
   go run . --mode server \
-    $(if [ -n "$FLAG_SERVER" ]; then echo -n " --server \"$FLAG_SERVER\""; fi) \
-    $(if [ -n "$FLAG_PORT" ]; then echo -n " --port $FLAG_PORT"; fi) \
-    $(if [ -n "$FLAG_USERNAME" ]; then echo -n " --username \"$FLAG_USERNAME\""; fi) \
-    $(if [ -n "$FLAG_PASSWORD" ]; then echo -n " --password \"$FLAG_PASSWORD\""; fi) \
-    $(if [ -n "$FLAG_FOLDER" ]; then echo -n " --folder \"$FLAG_FOLDER\""; fi) \
-    $(if [ -n "$FLAG_DAYS" ]; then echo -n " --days $FLAG_DAYS"; fi) \
-    $(if [ -n "$FLAG_LIMIT" ]; then echo -n " --limit $FLAG_LIMIT"; fi) \
-    $(if [ -n "$FLAG_SUMMARIZER" ]; then echo -n " --summarizer \"$FLAG_SUMMARIZER\""; fi) \
-    $(if [ -n "$FLAG_HTTP_PORT" ]; then echo -n " --http-port $FLAG_HTTP_PORT"; fi) \
-    $(if [ -n "$FLAG_HTML_FILE" ]; then echo -n " --html-file \"$FLAG_HTML_FILE\""; fi)
+    $(if [ -n "$NEWS_SERVER" ]; then echo -n " --server \"$NEWS_SERVER\""; fi) \
+    $(if [ -n "$NEWS_PORT" ]; then echo -n " --port $NEWS_PORT"; fi) \
+    $(if [ -n "$NEWS_USERNAME" ]; then echo -n " --username \"$NEWS_USERNAME\""; fi) \
+    $(if [ -n "$NEWS_PASSWORD" ]; then echo -n " --password \"$NEWS_PASSWORD\""; fi) \
+    $(if [ -n "$NEWS_FOLDER" ]; then echo -n " --folder \"$NEWS_FOLDER\""; fi) \
+    $(if [ -n "$NEWS_DAYS" ]; then echo -n " --days $NEWS_DAYS"; fi) \
+    $(if [ -n "$NEWS_LIMIT" ]; then echo -n " --limit $NEWS_LIMIT"; fi) \
+    $(if [ -n "$NEWS_SUMMARIZER" ]; then echo -n " --summarizer \"$NEWS_SUMMARIZER\""; fi) \
+    $(if [ -n "$NEWS_HTTP_PORT" ]; then echo -n " --http-port $NEWS_HTTP_PORT"; fi) \
+    $(if [ -n "$NEWS_HTML_FILE" ]; then echo -n " --html-file \"$NEWS_HTML_FILE\""; fi)
 
