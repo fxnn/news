@@ -17,7 +17,7 @@
         .story a { color: #000; text-decoration: none; }
         .story a:hover { text-decoration: underline; }
         .read-more-link { font-weight: bold; font-family: serif; } /* Style for "Read more" links */
-        .inline-date { font-family: serif; font-size: 0.9em; color: #555; } /* Style for inline date */
+        .inline-date { font-family: serif; font-size: 0.9em; color: #000; } /* Style for inline date */
         #error-message { color: #000; text-align: center; } /* Changed to black as per b/w scheme */
         #loading-message { text-align: center; font-style: italic; color: #000; }
     </style>
@@ -81,7 +81,8 @@
                             if (story.PublishedDate) {
                                 const dateSpan = document.createElement('span');
                                 dateSpan.classList.add('inline-date');
-                                dateSpan.textContent = new Date(story.PublishedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) + '. ';
+                                // Use innerHTML to render the center dot entity
+                                dateSpan.innerHTML = new Date(story.PublishedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) + ' &middot; ';
                                 teaserPara.appendChild(dateSpan);
                             }
 
