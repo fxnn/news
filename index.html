@@ -7,10 +7,10 @@
     <style>
         body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
         h1 { text-align: center; color: #333; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .story { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .story:last-child { border-bottom: none; }
-        .story h2 { margin-top: 0; color: #0056b3; }
+        .story h2 { margin-top: 0; color: #0056b3; font-family: serif; }
         .story p { margin-bottom: 5px; }
         .story .story-meta { color: #777; font-size: 0.9em; margin-bottom: 10px; } /* New style for source/date */
         .story a { color: #007bff; text-decoration: none; }
@@ -49,9 +49,17 @@
                             const storyElement = document.createElement('div');
                             storyElement.classList.add('story');
 
-                            const headline = document.createElement('h2');
-                            headline.textContent = story.Headline;
-                            storyElement.appendChild(headline);
+                            const headlineElement = document.createElement('h2');
+                            if (story.URL) {
+                                const headlineLink = document.createElement('a');
+                                headlineLink.href = story.URL;
+                                headlineLink.target = '_blank';
+                                headlineLink.textContent = story.Headline;
+                                headlineElement.appendChild(headlineLink);
+                            } else {
+                                headlineElement.textContent = story.Headline;
+                            }
+                            storyElement.appendChild(headlineElement);
 
                             // Create a single paragraph for source and date
                             const metaPara = document.createElement('p');
@@ -69,16 +77,20 @@
                             }
 
                             const teaser = document.createElement('p');
-                            teaser.textContent = story.Teaser;
-                            storyElement.appendChild(teaser);
-
+                            let teaserContent = story.Teaser;
                             if (story.URL) {
+                                teaserContent += ' '; // Add a space before the link
                                 const urlLink = document.createElement('a');
                                 urlLink.href = story.URL;
                                 urlLink.textContent = 'Read more';
                                 urlLink.target = '_blank'; // Open in new tab
-                                storyElement.appendChild(urlLink);
+                                // Append link HTML as string to teaser content for inline display
+                                teaser.innerHTML = teaserContent; // Use innerHTML to parse the <a> tag
+                                teaser.appendChild(urlLink); // Append the actual node
+                            } else {
+                                teaser.textContent = teaserContent;
                             }
+                            storyElement.appendChild(teaser);
                             storiesContainer.appendChild(storyElement);
                         });
                     } else {
