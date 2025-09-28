@@ -41,17 +41,18 @@
 
 The app will consist of the following components.
 
-* **Backend.**
-  Lightweight.
-  Will poll the email server in regular intervals to check for unknown 
-  newsletters.
-  Parses all incoming newsletters.
-  Provides views for the UI.
-  Provides a RESTful API for the UI.
-  Integrates with one or multiple data storage solutions.
+* **Downloader.**
+  A small program that connects to the IMAP server, downloads new e‑mails,
+  and stores them as local files for further processing.
 
-* **UI.**
-  A web app that connects to the backend via RESTful API.
+* **Processor.**
+  A separate program (run as a cron job) that reads the downloaded e‑mail
+  files, uses LLMs to extract news stories, and stores the resulting
+  structured data in a database.
+
+* **Server.**
+  A lightweight HTTP server that reads from the database and serves the
+  user interface via a RESTful API.
 
 ## Email integration
 
