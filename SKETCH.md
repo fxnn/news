@@ -43,16 +43,18 @@ The app will consist of the following components.
 
 * **Downloader.**
   A small program that connects to the IMAP server, downloads new e‑mails,
-  and stores them as local files for further processing.
+  and stores them using a storage mechanism of choice (e.g., local files,
+  a database, or other suitable store) for further processing.
 
 * **Processor.**
   A separate program (run as a cron job) that reads the downloaded e‑mail
-  files, uses LLMs to extract news stories, and stores the resulting
-  structured data in a database.
+  data from the chosen storage, uses LLMs to extract news stories, and
+  stores the resulting structured data using the same flexible storage
+  approach.
 
 * **Server.**
-  A lightweight HTTP server that reads from the database and serves the
-  user interface via a RESTful API.
+  A lightweight HTTP server that reads from the chosen storage mechanism
+  and serves the user interface via a RESTful API.
 
 ## Email integration
 
