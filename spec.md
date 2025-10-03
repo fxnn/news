@@ -24,10 +24,10 @@ A Go command‑line application that reads emails from a Maildir, extracts one o
 3. **Output**
    - When `--storydir` is provided, write each story as an individual JSON file.
    - File name format: `<date>_<message-id>_<index>.json` where `index` starts at `1`.
-   - When `--storydir` is omitted, write all story JSON objects to **stdout** as a JSON array, one object per line.
+   - When `--storydir` is omitted, emit newline‑delimited JSON (NDJSON), one object per line.
 
 4. **Incremental Processing**
-   - Before processing an email, check the story directory for any file whose name starts with the email’s `<date>_<message-id>`.
+   - Before processing an email, check the story directory for any file whose name starts with the sanitized `<date>_<message-id>` prefix. The `<date>` uses a strict ISO‑8601 format without colons (e.g., `20060102T150405Z`), and the `Message‑ID` is normalized by stripping angle brackets and replacing filesystem‑unsafe characters with underscores.
    - If such files exist, skip the email (already processed).
 
 5. **Configuration**
@@ -46,22 +46,25 @@ A Go command‑line application that reads emails from a Maildir, extracts one o
    - `--storydir` (optional): directory for story JSON files.
    - `--config` (required): path to the TOML configuration file.
    - `--limit` (optional): maximum number of emails to process.
+   - `--limit` counts only emails that are actually processed (i.e., after skipping already‑processed ones).
    - `--verbose` (optional): enable DEBUG‑level logs.
    - `--help`: display usage information.
 
 7. **Logging**
-   - Emit logs to **stderr** in logfmt format (`key=value` pairs).
+   - Emit logs to **stderr** in logfmt format (`key=value` pairs) using a structured logger such as `zerolog`.
    - Levels: `INFO`, `WARN`, `ERROR`, `DEBUG` (when `--verbose`).
    - Log key events: start/end of processing, email parsing failures, LLM request/response, file writes, skipped emails.
 
 8. **Error Handling**
    - Unparsable emails → log `WARN` with email path, continue.
    - LLM request failures → log `WARN` with error details, continue.
-   - Fatal configuration or flag errors → print error to stderr and exit with non‑zero status.
+   - Fatal configuration or flag errors → print error to stderr and exit with a defined non‑zero status (see Exit Codes).
 
 ## Non‑Functional Requirements
 
 - **Performance**: Process emails sequentially; no concurrency required.
+- **Timeouts**: HTTP client requests (e.g., to the LLM) use a configurable timeout (default 30 seconds) to avoid hangs.
+- **Body Streaming**: Large email bodies are streamed and truncated to a configurable maximum size, with a warning logged if truncation occurs.
 - **Reliability**: Must not crash on malformed emails or LLM errors.
 - **Portability**: Buildable on Linux, macOS, and Windows (pure Go).
 - **Security**: No special handling; treat email content as untrusted but do not execute it.
@@ -92,6 +95,7 @@ A Go command‑line application that reads emails from a Maildir, extracts one o
 +-------------------+
 ```
 
+- **LLM Client Interface**: Defined as an interface with implementations per provider (e.g., OpenAI). Allows future extensions to other providers.
 - **CLI & Flag Parser**: Uses `flag` or `cobra` to parse command‑line arguments.
 - **Config Loader**: Reads TOML via `BurntSushi/toml` (or `pelletier/go-toml`).
 - **Maildir Scanner**: Walks the directory tree, yields file paths.
@@ -122,6 +126,7 @@ type Story struct {
 [llm]
 provider = "openai"          # future providers can be added
 api_key = "YOUR_API_KEY"
+# Can also be supplied via the environment variable `LLM_API_KEY`. If both are set, the environment variable takes precedence.
 model = "gpt-4o-mini"
 temperature = 0.7
 prompt_template = """
