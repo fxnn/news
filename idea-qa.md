@@ -11,6 +11,14 @@ No limits on the number of stories. It's expected that an e-mail contains one or
 ## What is the desired format for the extracted story metadata (headline, teaser, URL) – JSON, YAML, plain text?
 JSON
 
+## Which information shall be stored per story?
+- headline
+- teaser
+- URL
+- e-mail address (from the `From` field)
+- sender name (from the `From` field)
+- timestamp (from the `Date` field)
+
 ## Where should the story output directory be created if it does not exist, and what permissions are needed?
 Expect the directory to exist
 
