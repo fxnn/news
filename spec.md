@@ -50,6 +50,13 @@ A Go command‑line application that reads emails from a Maildir, extracts one o
    - `--verbose` (optional): enable DEBUG‑level logs.
    - `--help`: display usage information.
 
+   ## Exit Codes
+
+   - `0` = success
+   - `1` = CLI argument/config error
+   - `2` = runtime error (e.g., I/O)
+   - `3` = LLM failure
+
 7. **Logging**
    - Emit logs to **stderr** in logfmt format (`key=value` pairs) using a structured logger such as `zerolog`.
    - Levels: `INFO`, `WARN`, `ERROR`, `DEBUG` (when `--verbose`).
