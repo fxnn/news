@@ -20,3 +20,9 @@ func TestMainPackageBuilds(t *testing.T) {
 		t.Fatalf("building main package failed: %v", err)
 	}
 }
+
+func TestCIWorkflowExists(t *testing.T) {
+	if _, err := os.Stat("../.github/workflows/go.yml"); os.IsNotExist(err) {
+		t.Fatal(".github/workflows/go.yml does not exist in project root")
+	}
+}
