@@ -19,7 +19,7 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 - [x] write failing test that checks the file `.github/workflows/go.yml` exists
 - [x] run test and confirm it fails because the workflow file is missing
 - [x] implement by adding the minimal GitHub Actions workflow (the file is now present)
-- [ ] run test again and confirm it succeeds
+- [x] run test again and confirm it succeeds
 
 ### Step 4: Verify build passes locally
 - [ ] write failing test that runs `go build ./cmd/email-story-extractor` and expects success
