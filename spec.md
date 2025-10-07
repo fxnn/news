@@ -205,6 +205,8 @@ All tests should be runnable with `go test ./...` and use the standard Go testin
 - `encoding/json` – JSON serialization.
 - HTTP client (standard library) for LLM API calls.
 
+The name of the project itself shall be `github.com/fxnn/news`.
+
 ## Build & Run
 
 ```bash

@@ -6,7 +6,7 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 ### Step 1: Initialize Go module
 - [x] write failing test that checks `go.mod` exists or that `go list ./...` succeeds
 - [x] run test and confirm it fails because the module is not initialized
-- [ ] implement by running `go mod init example.com/email-story-extractor` (choose appropriate module path)
+- [ ] implement by running `go mod init github.com/fxnn/news` (choose appropriate module path)
 - [ ] run test again and confirm it succeeds
 
 ### Step 2: Create main package scaffold
