@@ -16,7 +16,7 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 - [x] run test again and confirm it succeeds
 
 ### Step 3: Add CI workflow
-- [ ] write failing test that checks the file `.github/workflows/go.yml` exists
+- [x] write failing test that checks the file `.github/workflows/go.yml` exists
 - [ ] run test and confirm it fails because the workflow file is missing
 - [ ] implement by adding the minimal GitHub Actions workflow (the file is now present)
 - [ ] run test again and confirm it succeeds
