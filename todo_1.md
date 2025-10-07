@@ -10,7 +10,7 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 - [ ] run test again and confirm it succeeds
 
 ### Step 2: Create main package scaffold
-- [ ] write failing test that verifies `cmd/email-story-extractor/main.go` builds
+- [x] write failing test that verifies `cmd/email-story-extractor/main.go` builds
 - [ ] run test and confirm it fails due to the missing file
 - [ ] implement by creating `cmd/email-story-extractor/main.go` with a placeholder `package main` and a `func main(){}` that prints “TODO”
 - [ ] run test again and confirm it succeeds
