@@ -7,13 +7,13 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 - [x] write failing test that checks `go.mod` exists or that `go list ./...` succeeds
 - [x] run test and confirm it fails because the module is not initialized
 - [x] implement by running `go mod init github.com/fxnn/news` (choose appropriate module path)
-- [ ] run test again and confirm it succeeds
+- [x] run test again and confirm it succeeds
 
 ### Step 2: Create main package scaffold
 - [x] write failing test that verifies `cmd/email-story-extractor/main.go` builds
 - [x] run test and confirm it fails due to the missing file
 - [x] implement by creating `cmd/email-story-extractor/main.go` with a placeholder `package main` and a `func main(){}` that prints “TODO”
-- [ ] run test again and confirm it succeeds
+- [x] run test again and confirm it succeeds
 
 ### Step 3: Add CI workflow
 - [ ] write failing test that checks the file `.github/workflows/go.yml` exists
