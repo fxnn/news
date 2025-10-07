@@ -23,9 +23,9 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 
 ### Step 4: Verify build passes locally
 - [x] write failing test that runs `go build ./cmd/email-story-extractor` and expects success
-- [ ] run test and confirm it fails before the implementation is complete
-- [ ] implement any missing build steps (e.g., ensure `main.go` compiles)
-- [ ] run test again and confirm it succeeds
+- [x] run test and confirm it fails before the implementation is complete
+- [x] implement any missing build steps (e.g., ensure `main.go` compiles)
+- [x] run test again and confirm it succeeds
 
 ## Outcome
 - `go.mod` is initialized with the correct module path.
