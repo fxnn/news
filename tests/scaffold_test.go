@@ -26,3 +26,10 @@ func TestCIWorkflowExists(t *testing.T) {
 		t.Fatal(".github/workflows/go.yml does not exist in project root")
 	}
 }
+
+func TestBuildPasses(t *testing.T) {
+	cmd := exec.Command("go", "build", "../cmd/email-story-extractor")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("`go build ./cmd/email-story-extractor` failed: %v", err)
+	}
+}
