@@ -22,7 +22,7 @@ Set up a minimal Go module, directory layout, and CI pipeline to enable building
 - [x] run test again and confirm it succeeds
 
 ### Step 4: Verify build passes locally
-- [ ] write failing test that runs `go build ./cmd/email-story-extractor` and expects success
+- [x] write failing test that runs `go build ./cmd/email-story-extractor` and expects success
 - [ ] run test and confirm it fails before the implementation is complete
 - [ ] implement any missing build steps (e.g., ensure `main.go` compiles)
 - [ ] run test again and confirm it succeeds
