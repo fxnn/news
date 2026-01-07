@@ -21,6 +21,21 @@ We implement a newsletter reading app in Golang.
 - Under no circumstances should you erase or alter tests just to get a commit to
   pass. If there is a genuine bug in a test, fix the test.
 
+## Testing Practices
+
+- Ad-hoc tests using the Bash tool are acceptable for bootstrapping and build
+  verification (does it compile? do files exist?).
+- For testing code behavior, always write proper unit tests instead of ad-hoc
+  manual tests.
+- Examples of behavior that requires unit tests:
+  - Does --help produce the correct output?
+  - Does the program exit with the right error when required arguments are
+    missing?
+  - Does the parser correctly handle different input formats?
+  - Does the function return the expected result for given inputs?
+- Unit tests provide documentation, prevent regressions, and enable confident
+  refactoring.
+
 ## Code Requirements
 
 - Don't leave commented-out code in the files. No dead code.
