@@ -9,8 +9,10 @@
 .aider*
 !.aider.conf.yml
 
-# build results 
+# build results
 news
+/story-extractor
+/ui-server
 
 # os specifics
 .DS_Store
