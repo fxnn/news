@@ -1,9 +1,0 @@
-# see https://aider.chat/docs/config/aider_conf.html
-#
-
-read:
-- CONVENTIONS.md
-
-# in git commits, attribute Aider using Co-Authored-By: trailers
-attribute-co-authored-by: true
-
