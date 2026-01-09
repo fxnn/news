@@ -62,6 +62,14 @@ func TestParseOptions_OptionalFlags(t *testing.T) {
 	if opts.Verbose {
 		t.Errorf("Verbose = %v, want false", opts.Verbose)
 	}
+
+	if opts.LogHeaders {
+		t.Errorf("LogHeaders = %v, want false", opts.LogHeaders)
+	}
+
+	if opts.LogBodies {
+		t.Errorf("LogBodies = %v, want false", opts.LogBodies)
+	}
 }
 
 func TestParseOptions_AllFlags(t *testing.T) {
@@ -94,5 +102,25 @@ func TestParseOptions_AllFlags(t *testing.T) {
 
 	if !opts.Verbose {
 		t.Errorf("Verbose = %v, want true", opts.Verbose)
+	}
+}
+
+func TestParseOptions_LogFlags(t *testing.T) {
+	opts, err := ParseOptions([]string{
+		"--maildir", "/tmp/mail",
+		"--config", "test.toml",
+		"--log-headers",
+		"--log-bodies",
+	})
+	if err != nil {
+		t.Fatalf("ParseOptions() unexpected error: %v", err)
+	}
+
+	if !opts.LogHeaders {
+		t.Errorf("LogHeaders = %v, want true", opts.LogHeaders)
+	}
+
+	if !opts.LogBodies {
+		t.Errorf("LogBodies = %v, want true", opts.LogBodies)
 	}
 }

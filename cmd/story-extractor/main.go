@@ -18,9 +18,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Enable verbose logging if debug mode is on
-	verbose := opts.Verbose || opts.Debug
-	log := logger.New(verbose)
+	log := logger.New(opts.Verbose)
 
 	cfg, err := config.Load(opts.Config)
 	if err != nil {
@@ -33,7 +31,8 @@ func main() {
 		"storydir", opts.Storydir,
 		"config", opts.Config,
 		"limit", opts.Limit,
-		"debug", opts.Debug)
+		"log_headers", opts.LogHeaders,
+		"log_bodies", opts.LogBodies)
 	log.Debug("LLM configuration loaded",
 		"provider", cfg.LLM.Provider,
 		"model", cfg.LLM.Model)
@@ -78,15 +77,22 @@ func main() {
 
 		processedCount++
 
-		if opts.Debug {
-			log.Debug("parsed email",
-				"index", i+1,
+		if opts.LogHeaders || opts.LogBodies {
+			logArgs := []any{
+				"index", i + 1,
 				"subject", parsedEmail.Subject,
 				"from_email", parsedEmail.FromEmail,
 				"from_name", parsedEmail.FromName,
 				"date", parsedEmail.Date.Format("2006-01-02 15:04:05"),
 				"message_id", parsedEmail.MessageID,
-				"body_length", len(parsedEmail.Body))
+				"body_length", len(parsedEmail.Body),
+			}
+
+			if opts.LogBodies {
+				logArgs = append(logArgs, "body", parsedEmail.Body)
+			}
+
+			log.Debug("parsed email", logArgs...)
 		}
 
 		// TODO: Extract stories using LLM
