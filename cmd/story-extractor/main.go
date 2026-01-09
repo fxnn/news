@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/fxnn/news/internal/cli"
 	"github.com/fxnn/news/internal/config"
@@ -100,14 +101,17 @@ func main() {
 		}
 
 		// Extract stories using LLM
+		startTime := time.Now()
 		stories, err := extractor.Extract(parsedEmail)
+		duration := time.Since(startTime)
+
 		if err != nil {
 			log.Warn("failed to extract stories", "path", path, "error", err)
 			errorCount++
 			continue
 		}
 
-		log.Info("extracted stories", "path", path, "count", len(stories))
+		log.Info("extracted stories", "path", path, "count", len(stories), "duration_ms", duration.Milliseconds())
 
 		// Save stories to files or stdout
 		if opts.Storydir != "" {
