@@ -109,7 +109,22 @@ func main() {
 
 		log.Info("extracted stories", "path", path, "count", len(stories))
 
-		// TODO: Save stories to files or stdout
+		// Save stories to files or stdout
+		if opts.Storydir != "" {
+			err = story.WriteStoriesToDir(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date, stories)
+			if err != nil {
+				log.Warn("failed to write stories to directory", "path", path, "error", err)
+				errorCount++
+				continue
+			}
+		} else {
+			err = story.WriteStoriesToStdout(stories)
+			if err != nil {
+				log.Warn("failed to write stories to stdout", "path", path, "error", err)
+				errorCount++
+				continue
+			}
+		}
 	}
 
 	log.Info("processing complete",
