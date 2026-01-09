@@ -60,6 +60,7 @@ func main() {
 	// Process each email
 	processedCount := 0
 	errorCount := 0
+	skippedCount := 0
 
 	for i, path := range emailPaths {
 		log.Debug("processing email", "index", i+1, "path", path)
@@ -78,6 +79,18 @@ func main() {
 			log.Warn("failed to parse email", "path", path, "error", err)
 			errorCount++
 			continue
+		}
+
+		// Check if stories already exist (incremental processing)
+		if opts.Storydir != "" {
+			exists, err := story.StoriesExist(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date)
+			if err != nil {
+				log.Warn("failed to check for existing stories", "path", path, "error", err)
+			} else if exists {
+				log.Debug("skipping email (stories already exist)", "path", path, "message_id", parsedEmail.MessageID)
+				skippedCount++
+				continue
+			}
 		}
 
 		processedCount++
@@ -134,5 +147,6 @@ func main() {
 	log.Info("processing complete",
 		"total", len(emailPaths),
 		"processed", processedCount,
+		"skipped", skippedCount,
 		"errors", errorCount)
 }
