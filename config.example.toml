@@ -1,8 +1,19 @@
 [llm]
 provider = "openai"
+
 # Model options:
 # - "gpt-4o-mini" (fast, cost-effective, good for simple newsletters)
 # - "gpt-4o" (higher quality, better for complex newsletters with many stories)
 model = "gpt-4o-mini"
-api_key = "your-api-key-here"
+
+# API Key - SECURITY NOTICE:
+# Option 1 (RECOMMENDED): Use environment variable
+#   Set OPENAI_API_KEY environment variable and leave api_key empty
+#   This prevents accidentally committing your API key to version control
+#
+# Option 2: Store in config file (less secure)
+#   Set api_key below, but NEVER commit this file to git
+#   *.toml files are gitignored by default
+api_key = ""
+
 base_url = "https://api.openai.com/v1"

@@ -129,13 +129,34 @@ Create a `config.toml` file (copy from `config.example.toml`):
 [llm]
 provider = "openai"
 model = "gpt-4o-mini"
-api_key = "your-api-key-here"
+api_key = ""
 base_url = "https://api.openai.com/v1"
 ```
 
-Supported models:
+**Supported models:**
 - `gpt-4o-mini` (recommended, fast and cost-effective)
-- `gpt-4o` (higher quality, more expensive)
+- `gpt-4o` (higher quality, better for complex newsletters with many stories)
+
+**API Key Security (IMPORTANT):**
+
+The application requires an OpenAI API key. You have two options:
+
+**Option 1: Environment Variable (Recommended)**
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+./story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config config.toml
+```
+
+**Option 2: Config File (Less Secure)**
+```toml
+api_key = "your-api-key-here"
+```
+
+⚠️ **Security Notes:**
+- Never commit your `config.toml` with real API keys to version control
+- `*.toml` files are automatically gitignored (except `.example.toml`)
+- Environment variables are more secure as they won't be accidentally committed
+- The environment variable `OPENAI_API_KEY` overrides the config file value
 
 #### Build
 

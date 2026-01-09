@@ -1,5 +1,9 @@
 .env
 
+# config files with API keys
+*.toml
+!*.example.toml
+
 #
 # tools and IDEs
 .vscode/
