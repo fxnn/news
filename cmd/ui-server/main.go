@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/fxnn/news/internal/story"
 	"github.com/fxnn/news/internal/storyreader"
 )
 
@@ -56,6 +57,11 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to read stories: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Ensure we always return an array, never null
+	if stories == nil {
+		stories = []story.Story{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

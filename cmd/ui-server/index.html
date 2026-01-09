@@ -242,7 +242,7 @@
         }
 
         function renderStories(stories) {
-            if (stories.length === 0) {
+            if (!stories || stories.length === 0) {
                 contentEl.innerHTML = '<div class="empty-state">No stories found. Start processing your newsletters to see stories here.</div>';
                 return;
             }
@@ -298,6 +298,7 @@
                 const stories = await response.json();
                 renderStories(stories);
             } catch (error) {
+                console.error('Failed to load stories:', error);
                 showError(error.message);
             }
         }

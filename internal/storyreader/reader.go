@@ -23,7 +23,8 @@ func ReadStories(dir string) ([]story.Story, error) {
 		return nil, fmt.Errorf("failed to glob story files: %w", err)
 	}
 
-	var stories []story.Story
+	// Initialize with empty slice to ensure JSON encoding as [] not null
+	stories := []story.Story{}
 
 	for _, path := range matches {
 		data, err := os.ReadFile(path)
