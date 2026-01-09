@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/email"
@@ -86,8 +87,12 @@ EXCLUSION RULES:
 - If there are no valid stories with URLs, return {"stories": []}
 `, emailData.Subject, emailData.Body)
 
+	// Create context with 60 second timeout to prevent indefinite hangs
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
 	resp, err := e.client.CreateChatCompletion(
-		context.Background(),
+		ctx,
 		openai.ChatCompletionRequest{
 			Model: e.model,
 			Messages: []openai.ChatCompletionMessage{

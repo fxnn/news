@@ -148,8 +148,12 @@ Body only.
 		t.Errorf("FromEmail = %v, want test@example.com", email.FromEmail)
 	}
 
-	if email.MessageID != "" {
-		t.Errorf("MessageID = %v, want empty string", email.MessageID)
+	// Should have generated fallback Message-ID
+	if !strings.HasPrefix(email.MessageID, "<generated-") {
+		t.Errorf("MessageID = %v, want generated fallback starting with <generated-", email.MessageID)
+	}
+	if !strings.HasSuffix(email.MessageID, "@fallback>") {
+		t.Errorf("MessageID = %v, want generated fallback ending with @fallback>", email.MessageID)
 	}
 
 	if email.Date.IsZero() {

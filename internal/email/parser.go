@@ -1,11 +1,15 @@
 package email
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 
@@ -58,13 +62,28 @@ func Parse(r io.Reader) (*Email, error) {
 		if err != nil {
 			// Use current time as fallback
 			email.Date = time.Now()
+			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+			log.Warn("failed to parse email date, using current time",
+				"date_header", dateStr,
+				"error", err)
 		}
 	} else {
 		email.Date = time.Now()
+		log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+		log.Warn("email missing Date header, using current time")
 	}
 
-	// Parse Message-ID
+	// Parse Message-ID (generate fallback if missing to avoid filename conflicts)
 	email.MessageID = msg.Header.Get("Message-ID")
+	if email.MessageID == "" {
+		// Generate fallback Message-ID using hash of email content
+		// This ensures unique IDs even for emails without Message-ID headers
+		hash := sha256.Sum256([]byte(email.Subject + email.FromEmail + email.Date.String()))
+		email.MessageID = "<generated-" + hex.EncodeToString(hash[:16]) + "@fallback>"
+		log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+		log.Warn("email missing Message-ID header, generated fallback",
+			"generated_id", email.MessageID)
+	}
 
 	// Parse Body
 	contentType := msg.Header.Get("Content-Type")
@@ -145,10 +164,34 @@ func extractTextFromHTML(htmlContent string) string {
 	var extract func(*html.Node)
 	extract = func(n *html.Node) {
 		if n.Type == html.TextNode {
-			text.WriteString(n.Data)
+			// Trim and skip empty text nodes
+			trimmed := strings.TrimSpace(n.Data)
+			if trimmed != "" {
+				// Add space before text if builder has content
+				if text.Len() > 0 {
+					text.WriteString(" ")
+				}
+				text.WriteString(trimmed)
+			}
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			extract(c)
+		if n.Type == html.ElementNode {
+			// Add newline after block-level elements for better structure
+			isBlockElement := n.Data == "p" || n.Data == "div" || n.Data == "br" ||
+				n.Data == "h1" || n.Data == "h2" || n.Data == "h3" ||
+				n.Data == "h4" || n.Data == "h5" || n.Data == "h6" ||
+				n.Data == "li" || n.Data == "tr"
+
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				extract(c)
+			}
+
+			if isBlockElement && text.Len() > 0 {
+				text.WriteString("\n")
+			}
+		} else {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				extract(c)
+			}
 		}
 	}
 	extract(doc)
