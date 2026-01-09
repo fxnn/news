@@ -36,7 +36,7 @@ type LLMResponse struct {
 }
 
 func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error) {
-	prompt := fmt.Sprintf(`Extract news stories from this email. For each story, provide a headline, teaser, and URL.
+	prompt := fmt.Sprintf(`Your task is to extract ALL news stories from this newsletter email. Read through the ENTIRE email body carefully and extract EVERY story that has a URL.
 
 Subject: %s
 
@@ -54,15 +54,34 @@ Return a JSON object with this exact structure:
   ]
 }
 
-IMPORTANT RULES:
+CRITICAL INSTRUCTIONS:
+- Extract ALL stories from the email body - not just the ones mentioned in the subject line
+- Read through the ENTIRE email systematically from top to bottom
+- Each story with a unique URL should be included
+- Do NOT limit yourself to only a few stories - extract as many as exist
+
+FORMATTING RULES:
 - Write the headline and teaser in the same language as the original email
 - Keep headlines SHORT: maximum 5-8 words
 - In the teaser, clarify the kind of content (blog post, news article, GitHub repo, podcast episode, video, research paper, etc.)
 - Each story MUST have a unique URL link to the actual article
 - If there is only one URL in the email, create only one story
 - Separate stories should have separate URLs - do not create multiple stories for a single URL
+
+WHAT TO EXTRACT:
+- Each story should be a MAIN article/post/resource being featured in the newsletter
+- Extract the primary link for each distinct story/article
+- Stories are typically presented as separate entries with their own headline and description
+
+EXCLUSION RULES:
 - Exclude order links, shopping links, or any paid content
-- Exclude promotional content or advertisements
+- Exclude promotional content or advertisements labeled as "sponsored" or "ad"
+- Exclude newsletter management links (subscribe, unsubscribe, preferences, manage subscription)
+- Exclude social media links (follow us, share, tweet)
+- Exclude footer/administrative links (privacy policy, terms of service, contact us)
+- Exclude links to the newsletter homepage or archive
+- Exclude footnote links, reference links, and citation links within story text
+- Exclude "read more", "learn more", or supplementary links that are part of an existing story
 - Only include actual news stories or articles with readable content
 - If there are no valid stories with URLs, return {"stories": []}
 `, emailData.Subject, emailData.Body)
@@ -80,6 +99,8 @@ IMPORTANT RULES:
 			ResponseFormat: &openai.ChatCompletionResponseFormat{
 				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 			},
+			MaxTokens:   4096, // Allow longer responses for emails with many stories
+			Temperature: 0.3,  // Low temperature for consistent, focused extraction
 		},
 	)
 

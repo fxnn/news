@@ -1,5 +1,8 @@
 [llm]
 provider = "openai"
+# Model options:
+# - "gpt-4o-mini" (fast, cost-effective, good for simple newsletters)
+# - "gpt-4o" (higher quality, better for complex newsletters with many stories)
 model = "gpt-4o-mini"
 api_key = "your-api-key-here"
 base_url = "https://api.openai.com/v1"
