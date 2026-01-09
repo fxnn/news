@@ -6,12 +6,13 @@ import (
 )
 
 type Options struct {
-	Maildir  string
-	Storydir string
-	Config   string
-	Limit    int
-	Verbose  bool
-	Debug    bool
+	Maildir    string
+	Storydir   string
+	Config     string
+	Limit      int
+	Verbose    bool
+	LogHeaders bool
+	LogBodies  bool
 }
 
 func ParseOptions(args []string) (*Options, error) {
@@ -24,7 +25,8 @@ func ParseOptions(args []string) (*Options, error) {
 	fs.StringVar(&opts.Config, "config", "", "Path to the TOML configuration file (required)")
 	fs.IntVar(&opts.Limit, "limit", 0, "Maximum number of emails to process (optional, 0 = unlimited)")
 	fs.BoolVar(&opts.Verbose, "verbose", false, "Enable detailed log output")
-	fs.BoolVar(&opts.Debug, "debug", false, "Enable debug mode (logs all found emails)")
+	fs.BoolVar(&opts.LogHeaders, "log-headers", false, "Log parsed email headers (requires --verbose)")
+	fs.BoolVar(&opts.LogBodies, "log-bodies", false, "Log parsed email headers and bodies (requires --verbose)")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, err
