@@ -253,6 +253,7 @@
                 const displayName = story.from_name || story.from_email;
 
                 return `
+                    <!-- Story file: ${escapeHtml(story.filename || 'unknown')} -->
                     <article class="story">
                         <div class="story-avatar" style="background-color: ${color};">
                             ${escapeHtml(initials)}
