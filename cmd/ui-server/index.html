@@ -197,9 +197,17 @@
 
         function getColorForSender(email) {
             const hash = hashCode(email);
-            const hue = hash % 360;
-            const saturation = 65 + (hash % 20);
-            const lightness = 50 + (hash % 15);
+
+            // Use golden ratio to get better distribution across hue spectrum
+            const goldenRatio = 0.618033988749895;
+            const hue = ((hash * goldenRatio) % 1) * 360;
+
+            // Higher saturation for more vibrant colors
+            const saturation = 70 + (hash % 15);
+
+            // Moderate lightness - not too light, not too dark
+            const lightness = 45 + (hash % 15);
+
             return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         }
 
