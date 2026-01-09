@@ -12,17 +12,22 @@ func TestParseOptions_RequiredFlags(t *testing.T) {
 	}{
 		{
 			name:    "missing maildir",
-			args:    []string{"--config", "test.toml"},
+			args:    []string{"--storydir", "/tmp/stories", "--config", "test.toml"},
+			wantErr: true,
+		},
+		{
+			name:    "missing storydir",
+			args:    []string{"--maildir", "/tmp/mail", "--config", "test.toml"},
 			wantErr: true,
 		},
 		{
 			name:    "missing config",
-			args:    []string{"--maildir", "/tmp/mail"},
+			args:    []string{"--maildir", "/tmp/mail", "--storydir", "/tmp/stories"},
 			wantErr: true,
 		},
 		{
-			name:    "both required flags present",
-			args:    []string{"--maildir", "/tmp/mail", "--config", "test.toml"},
+			name:    "all required flags present",
+			args:    []string{"--maildir", "/tmp/mail", "--storydir", "/tmp/stories", "--config", "test.toml"},
 			wantErr: false,
 		},
 	}
@@ -38,7 +43,7 @@ func TestParseOptions_RequiredFlags(t *testing.T) {
 }
 
 func TestParseOptions_OptionalFlags(t *testing.T) {
-	opts, err := ParseOptions([]string{"--maildir", "/tmp/mail", "--config", "test.toml"})
+	opts, err := ParseOptions([]string{"--maildir", "/tmp/mail", "--storydir", "/tmp/stories", "--config", "test.toml"})
 	if err != nil {
 		t.Fatalf("ParseOptions() unexpected error: %v", err)
 	}
@@ -51,8 +56,8 @@ func TestParseOptions_OptionalFlags(t *testing.T) {
 		t.Errorf("Config = %v, want test.toml", opts.Config)
 	}
 
-	if opts.Storydir != "" {
-		t.Errorf("Storydir = %v, want empty string", opts.Storydir)
+	if opts.Storydir != "/tmp/stories" {
+		t.Errorf("Storydir = %v, want /tmp/stories", opts.Storydir)
 	}
 
 	if opts.Limit != 0 {
@@ -69,6 +74,10 @@ func TestParseOptions_OptionalFlags(t *testing.T) {
 
 	if opts.LogBodies {
 		t.Errorf("LogBodies = %v, want false", opts.LogBodies)
+	}
+
+	if opts.LogStories {
+		t.Errorf("LogStories = %v, want false", opts.LogStories)
 	}
 }
 
@@ -109,8 +118,10 @@ func TestParseOptions_LogFlags(t *testing.T) {
 	opts, err := ParseOptions([]string{
 		"--maildir", "/tmp/mail",
 		"--config", "test.toml",
+		"--storydir", "/tmp/stories",
 		"--log-headers",
 		"--log-bodies",
+		"--log-stories",
 	})
 	if err != nil {
 		t.Fatalf("ParseOptions() unexpected error: %v", err)
@@ -122,5 +133,9 @@ func TestParseOptions_LogFlags(t *testing.T) {
 
 	if !opts.LogBodies {
 		t.Errorf("LogBodies = %v, want true", opts.LogBodies)
+	}
+
+	if !opts.LogStories {
+		t.Errorf("LogStories = %v, want true", opts.LogStories)
 	}
 }

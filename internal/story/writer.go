@@ -31,18 +31,6 @@ func WriteStoriesToDir(dir, messageID string, date time.Time, stories []Story) e
 	return nil
 }
 
-// WriteStoriesToStdout writes stories as JSON to stdout
-func WriteStoriesToStdout(stories []Story) error {
-	for _, story := range stories {
-		data, err := json.Marshal(story)
-		if err != nil {
-			return fmt.Errorf("failed to marshal story: %w", err)
-		}
-		fmt.Println(string(data))
-	}
-	return nil
-}
-
 // sanitizeMessageID removes angle brackets and replaces filesystem-unsafe characters
 func sanitizeMessageID(messageID string) string {
 	// Remove angle brackets
