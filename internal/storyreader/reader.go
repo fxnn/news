@@ -38,6 +38,9 @@ func ReadStories(dir string) ([]story.Story, error) {
 			continue
 		}
 
+		// Add filename for debugging
+		s.Filename = filepath.Base(path)
+
 		stories = append(stories, s)
 	}
 

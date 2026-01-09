@@ -9,4 +9,5 @@ type Story struct {
 	FromEmail string    `json:"from_email"`
 	FromName  string    `json:"from_name"`
 	Date      time.Time `json:"date"`
+	Filename  string    `json:"filename,omitempty"` // Optional: filename for debugging
 }
