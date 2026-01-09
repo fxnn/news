@@ -119,18 +119,168 @@ poll imap.example.com
 
 ### 2. Story Extractor
 
-Build and run:
+The story extractor processes newsletter emails using AI to extract individual news stories.
+
+#### Configuration
+
+Create a `config.toml` file (copy from `config.example.toml`):
+
+```toml
+[llm]
+provider = "openai"
+model = "gpt-4o-mini"
+api_key = "your-api-key-here"
+base_url = "https://api.openai.com/v1"
+```
+
+Supported models:
+- `gpt-4o-mini` (recommended, fast and cost-effective)
+- `gpt-4o` (higher quality, more expensive)
+
+#### Build
+
 ```bash
 go build ./cmd/story-extractor
-./story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config config.toml
+```
+
+#### Usage
+
+Basic usage:
+```bash
+./story-extractor \
+  --maildir ~/Maildir/newsletters \
+  --storydir ~/stories \
+  --config config.toml
+```
+
+#### CLI Flags
+
+Required:
+- `--maildir`: Path to the Maildir directory containing newsletters
+- `--storydir`: Path to the directory where stories will be saved as JSON files
+- `--config`: Path to the TOML configuration file with LLM settings
+
+Optional:
+- `--limit N`: Process maximum N emails (useful for testing)
+- `--verbose`: Enable verbose logging
+- `--log-headers`: Log email headers (for debugging)
+- `--log-bodies`: Log email bodies (for debugging)
+- `--log-stories`: Log extracted stories
+
+#### How It Works
+
+1. Reads emails from the Maildir directory (recursively scans `cur/` and `new/` subdirectories)
+2. Parses email headers, body (plain text, HTML, multipart MIME)
+3. Sends each email to the configured LLM with a prompt to extract news stories
+4. Saves each story as a JSON file: `<date>_<message-id>_<index>.json`
+5. Skips emails that have already been processed (incremental processing)
+
+Example story file (`2006-01-02_test@example.com_1.json`):
+```json
+{
+  "headline": "Example News Headline",
+  "teaser": "Brief summary of the article in 1-2 sentences.",
+  "url": "https://example.com/article",
+  "from_email": "newsletter@example.com",
+  "from_name": "Example Newsletter",
+  "date": "2006-01-02T15:04:05Z"
+}
 ```
 
 ### 3. UI Server
 
-Build and run:
+The UI server provides a web interface to browse and read extracted stories.
+
+#### Build
+
 ```bash
 go build ./cmd/ui-server
+```
+
+#### Usage
+
+```bash
 ./ui-server --storydir ~/stories
+```
+
+Or specify a custom port:
+```bash
+./ui-server --storydir ~/stories --port 3000
+```
+
+#### CLI Flags
+
+Required:
+- `--storydir`: Path to the directory containing story JSON files
+
+Optional:
+- `--port`: Port to listen on (default: 8080)
+
+#### Access
+
+Open your browser and navigate to:
+```
+http://localhost:8080
+```
+
+The UI displays:
+- All extracted stories sorted by date (newest first)
+- Story headline (clickable link to original article)
+- Brief teaser text
+- Source newsletter (sender name/email)
+- Publication date (shown as relative time: "Today", "2 days ago", etc.)
+
+## Quick Start
+
+Complete workflow from setup to reading stories:
+
+```bash
+# 1. Download newsletters using mbsync
+mbsync -a
+
+# 2. Extract stories from newsletters
+go build ./cmd/story-extractor
+./story-extractor \
+  --maildir ~/Maildir/newsletters \
+  --storydir ~/stories \
+  --config config.toml
+
+# 3. Start the UI server
+go build ./cmd/ui-server
+./ui-server --storydir ~/stories
+
+# 4. Open in browser
+open http://localhost:8080
+```
+
+## Usage Examples
+
+### Testing with a small batch
+```bash
+./story-extractor \
+  --maildir ~/Maildir/newsletters \
+  --storydir ~/stories \
+  --config config.toml \
+  --limit 5 \
+  --verbose
+```
+
+### Debugging email parsing
+```bash
+./story-extractor \
+  --maildir ~/Maildir/newsletters \
+  --storydir ~/stories \
+  --config config.toml \
+  --limit 1 \
+  --log-headers \
+  --log-bodies
+```
+
+### Daily newsletter processing
+Set up a cron job to run daily:
+```bash
+# crontab -e
+0 8 * * * /usr/local/bin/mbsync -a && /path/to/story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config ~/config.toml
 ```
 
 ## Development
