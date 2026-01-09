@@ -29,5 +29,15 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse TOML config: %w", err)
 	}
 
+	// Allow environment variable override for API key (more secure)
+	if envKey := os.Getenv("OPENAI_API_KEY"); envKey != "" {
+		cfg.LLM.APIKey = envKey
+	}
+
+	// Validate that we have an API key from either source
+	if cfg.LLM.APIKey == "" {
+		return nil, fmt.Errorf("API key is required (set in config file or OPENAI_API_KEY environment variable)")
+	}
+
 	return &cfg, nil
 }

@@ -68,37 +68,101 @@ provider = "openai"
 	}
 }
 
-func TestLoad_MinimalConfig(t *testing.T) {
+func TestLoad_MissingAPIKey(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "minimal.toml")
+	configPath := filepath.Join(tmpDir, "no-key.toml")
 
-	minimalContent := `[llm]
+	content := `[llm]
 provider = "openai"
 model = "gpt-4"
 `
 
-	if err := os.WriteFile(configPath, []byte(minimalContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		t.Fatalf("failed to write test config: %v", err)
 	}
+
+	// Clear environment variable to ensure test isolation
+	oldEnv := os.Getenv("OPENAI_API_KEY")
+	os.Unsetenv("OPENAI_API_KEY")
+	defer func() {
+		if oldEnv != "" {
+			os.Setenv("OPENAI_API_KEY", oldEnv)
+		}
+	}()
+
+	_, err := Load(configPath)
+	if err == nil {
+		t.Error("Load() expected error for missing API key, got nil")
+	}
+}
+
+func TestLoad_EnvVarAPIKey(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.toml")
+
+	configContent := `[llm]
+provider = "openai"
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+`
+
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
+	}
+
+	// Set environment variable
+	oldEnv := os.Getenv("OPENAI_API_KEY")
+	os.Setenv("OPENAI_API_KEY", "env-test-key")
+	defer func() {
+		if oldEnv != "" {
+			os.Setenv("OPENAI_API_KEY", oldEnv)
+		} else {
+			os.Unsetenv("OPENAI_API_KEY")
+		}
+	}()
 
 	cfg, err := Load(configPath)
 	if err != nil {
 		t.Fatalf("Load() unexpected error: %v", err)
 	}
 
-	if cfg.LLM.Provider != "openai" {
-		t.Errorf("Provider = %v, want openai", cfg.LLM.Provider)
+	if cfg.LLM.APIKey != "env-test-key" {
+		t.Errorf("APIKey = %v, want env-test-key (from environment)", cfg.LLM.APIKey)
+	}
+}
+
+func TestLoad_EnvVarOverridesConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.toml")
+
+	configContent := `[llm]
+provider = "openai"
+model = "gpt-4"
+api_key = "config-key"
+base_url = "https://api.openai.com/v1"
+`
+
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
 	}
 
-	if cfg.LLM.Model != "gpt-4" {
-		t.Errorf("Model = %v, want gpt-4", cfg.LLM.Model)
+	// Set environment variable - should override config file
+	oldEnv := os.Getenv("OPENAI_API_KEY")
+	os.Setenv("OPENAI_API_KEY", "env-override-key")
+	defer func() {
+		if oldEnv != "" {
+			os.Setenv("OPENAI_API_KEY", oldEnv)
+		} else {
+			os.Unsetenv("OPENAI_API_KEY")
+		}
+	}()
+
+	cfg, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("Load() unexpected error: %v", err)
 	}
 
-	if cfg.LLM.APIKey != "" {
-		t.Errorf("APIKey = %v, want empty string", cfg.LLM.APIKey)
-	}
-
-	if cfg.LLM.BaseURL != "" {
-		t.Errorf("BaseURL = %v, want empty string", cfg.LLM.BaseURL)
+	if cfg.LLM.APIKey != "env-override-key" {
+		t.Errorf("APIKey = %v, want env-override-key (environment should override config)", cfg.LLM.APIKey)
 	}
 }
