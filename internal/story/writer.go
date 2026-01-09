@@ -23,7 +23,9 @@ func WriteStoriesToDir(dir, messageID string, date time.Time, stories []Story) e
 			return fmt.Errorf("failed to marshal story: %w", err)
 		}
 
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		// Use 0600 permissions (owner read/write only) for privacy
+		// Newsletter content may contain sensitive information
+		if err := os.WriteFile(path, data, 0600); err != nil {
 			return fmt.Errorf("failed to write story file: %w", err)
 		}
 	}
