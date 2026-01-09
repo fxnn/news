@@ -18,7 +18,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	log := logger.New(opts.Verbose)
+	// Enable verbose logging if debug mode is on
+	verbose := opts.Verbose || opts.Debug
+	log := logger.New(verbose)
 
 	cfg, err := config.Load(opts.Config)
 	if err != nil {
@@ -77,7 +79,7 @@ func main() {
 		processedCount++
 
 		if opts.Debug {
-			log.Info("parsed email",
+			log.Debug("parsed email",
 				"index", i+1,
 				"subject", parsedEmail.Subject,
 				"from_email", parsedEmail.FromEmail,
