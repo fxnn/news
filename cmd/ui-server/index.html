@@ -101,6 +101,7 @@
             font-size: 0.95em;
             font-weight: 600;
             color: #555;
+            cursor: help;
         }
 
         .story-date {
@@ -258,7 +259,7 @@
                         </div>
                         <div class="story-content">
                             <div class="story-header">
-                                <div class="story-from">${escapeHtml(displayName)}</div>
+                                <div class="story-from" title="${escapeHtml(story.from_email)}">${escapeHtml(displayName)}</div>
                                 <div class="story-date">${formatDate(story.date)}</div>
                             </div>
                             <h2 class="story-headline">
