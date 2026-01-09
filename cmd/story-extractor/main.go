@@ -9,6 +9,7 @@ import (
 	"github.com/fxnn/news/internal/email"
 	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/maildir"
+	"github.com/fxnn/news/internal/story"
 )
 
 func main() {
@@ -36,6 +37,9 @@ func main() {
 	log.Debug("LLM configuration loaded",
 		"provider", cfg.LLM.Provider,
 		"model", cfg.LLM.Model)
+
+	// Create story extractor
+	extractor := story.NewOpenAIExtractor(&cfg.LLM)
 
 	// Read all email files from the Maildir
 	emailPaths, err := maildir.Read(opts.Maildir)
@@ -95,7 +99,16 @@ func main() {
 			log.Debug("parsed email", logArgs...)
 		}
 
-		// TODO: Extract stories using LLM
+		// Extract stories using LLM
+		stories, err := extractor.Extract(parsedEmail)
+		if err != nil {
+			log.Warn("failed to extract stories", "path", path, "error", err)
+			errorCount++
+			continue
+		}
+
+		log.Info("extracted stories", "path", path, "count", len(stories))
+
 		// TODO: Save stories to files or stdout
 	}
 
