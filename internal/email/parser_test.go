@@ -167,3 +167,48 @@ func TestParse_InvalidEmail(t *testing.T) {
 		t.Logf("Parse() returned error for invalid email: %v", err)
 	}
 }
+
+func TestParse_EncodedSubject(t *testing.T) {
+	rawEmail := `From: test@example.com
+Subject: =?utf-8?B?R2VsZCBhbmxlZ2VuIGbDvHIgS2luZGU=?= =?utf-8?B?cg==?=
+Date: Mon, 02 Jan 2006 15:04:05 -0700
+Message-ID: <encoded@example.com>
+
+Test body.
+`
+
+	email, err := Parse(strings.NewReader(rawEmail))
+	if err != nil {
+		t.Fatalf("Parse() unexpected error: %v", err)
+	}
+
+	// The decoded subject should be "Geld anlegen für Kinder"
+	expectedSubject := "Geld anlegen für Kinder"
+	if email.Subject != expectedSubject {
+		t.Errorf("Subject = %v, want %v", email.Subject, expectedSubject)
+	}
+}
+
+func TestParse_EncodedFromName(t *testing.T) {
+	rawEmail := `From: =?utf-8?Q?J=C3=B6rg_M=C3=BCller?= <jorg@example.com>
+Subject: Test
+Date: Mon, 02 Jan 2006 15:04:05 -0700
+
+Test body.
+`
+
+	email, err := Parse(strings.NewReader(rawEmail))
+	if err != nil {
+		t.Fatalf("Parse() unexpected error: %v", err)
+	}
+
+	// The decoded name should be "Jörg Müller"
+	expectedName := "Jörg Müller"
+	if email.FromName != expectedName {
+		t.Errorf("FromName = %v, want %v", email.FromName, expectedName)
+	}
+
+	if email.FromEmail != "jorg@example.com" {
+		t.Errorf("FromEmail = %v, want jorg@example.com", email.FromEmail)
+	}
+}

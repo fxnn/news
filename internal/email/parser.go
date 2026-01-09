@@ -30,8 +30,16 @@ func Parse(r io.Reader) (*Email, error) {
 
 	email := &Email{}
 
-	// Parse Subject
-	email.Subject = msg.Header.Get("Subject")
+	// Parse Subject (decode MIME-encoded words)
+	decoder := &mime.WordDecoder{}
+	subject := msg.Header.Get("Subject")
+	decodedSubject, err := decoder.DecodeHeader(subject)
+	if err == nil {
+		email.Subject = decodedSubject
+	} else {
+		// Fallback to raw subject if decoding fails
+		email.Subject = subject
+	}
 
 	// Parse From
 	from, err := mail.ParseAddress(msg.Header.Get("From"))
