@@ -34,7 +34,8 @@ func main() {
 		"config", opts.Config,
 		"limit", opts.Limit,
 		"log_headers", opts.LogHeaders,
-		"log_bodies", opts.LogBodies)
+		"log_bodies", opts.LogBodies,
+		"log_stories", opts.LogStories)
 	log.Debug("LLM configuration loaded",
 		"provider", cfg.LLM.Provider,
 		"model", cfg.LLM.Model)
@@ -82,15 +83,13 @@ func main() {
 		}
 
 		// Check if stories already exist (incremental processing)
-		if opts.Storydir != "" {
-			exists, err := story.StoriesExist(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date)
-			if err != nil {
-				log.Warn("failed to check for existing stories", "path", path, "error", err)
-			} else if exists {
-				log.Debug("skipping email (stories already exist)", "path", path, "message_id", parsedEmail.MessageID)
-				skippedCount++
-				continue
-			}
+		exists, err := story.StoriesExist(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date)
+		if err != nil {
+			log.Warn("failed to check for existing stories", "path", path, "error", err)
+		} else if exists {
+			log.Debug("skipping email (stories already exist)", "path", path, "message_id", parsedEmail.MessageID)
+			skippedCount++
+			continue
 		}
 
 		processedCount++
@@ -126,21 +125,23 @@ func main() {
 
 		log.Info("extracted stories", "path", path, "count", len(stories), "duration_ms", duration.Milliseconds())
 
-		// Save stories to files or stdout
-		if opts.Storydir != "" {
-			err = story.WriteStoriesToDir(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date, stories)
-			if err != nil {
-				log.Warn("failed to write stories to directory", "path", path, "error", err)
-				errorCount++
-				continue
+		// Log stories if requested
+		if opts.LogStories {
+			for i, s := range stories {
+				log.Debug("story",
+					"index", i+1,
+					"headline", s.Headline,
+					"teaser", s.Teaser,
+					"url", s.URL)
 			}
-		} else {
-			err = story.WriteStoriesToStdout(stories)
-			if err != nil {
-				log.Warn("failed to write stories to stdout", "path", path, "error", err)
-				errorCount++
-				continue
-			}
+		}
+
+		// Save stories to directory
+		err = story.WriteStoriesToDir(opts.Storydir, parsedEmail.MessageID, parsedEmail.Date, stories)
+		if err != nil {
+			log.Warn("failed to write stories to directory", "path", path, "error", err)
+			errorCount++
+			continue
 		}
 	}
 
