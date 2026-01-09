@@ -8,6 +8,7 @@ import (
 	"github.com/fxnn/news/internal/cli"
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/email"
+	"github.com/fxnn/news/internal/llm"
 	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/maildir"
 	"github.com/fxnn/news/internal/story"
@@ -41,7 +42,7 @@ func main() {
 		"model", cfg.LLM.Model)
 
 	// Create story extractor
-	extractor := story.NewOpenAIExtractor(&cfg.LLM)
+	extractor := llm.NewOpenAIExtractor(&cfg.LLM)
 
 	// Read all email files from the Maildir
 	emailPaths, err := maildir.Read(opts.Maildir)
