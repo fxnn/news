@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Stories</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading, .error {
+            background-color: #fff;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .error {
+            color: #d32f2f;
+        }
+
+        .story {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+        }
+
+        .story:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .story-headline {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .story-headline a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        .story-headline a:hover {
+            text-decoration: underline;
+        }
+
+        .story-teaser {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .story-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85em;
+            color: #777;
+            flex-wrap: wrap;
+        }
+
+        .story-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .story-meta-label {
+            font-weight: 600;
+        }
+
+        .empty-state {
+            background-color: #fff;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .story {
+                padding: 15px;
+            }
+
+            .story-headline {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>News Stories</h1>
+            <div class="subtitle">Stories extracted from your newsletters</div>
+        </header>
+
+        <div id="content">
+            <div class="loading">Loading stories...</div>
+        </div>
+    </div>
+
+    <script>
+        const contentEl = document.getElementById('content');
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return 'Today';
+            } else if (diffDays === 1) {
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} days ago`;
+            } else {
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        function renderStories(stories) {
+            if (stories.length === 0) {
+                contentEl.innerHTML = '<div class="empty-state">No stories found. Start processing your newsletters to see stories here.</div>';
+                return;
+            }
+
+            const storiesHTML = stories.map(story => `
+                <article class="story">
+                    <h2 class="story-headline">
+                        <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
+                            ${escapeHtml(story.headline)}
+                        </a>
+                    </h2>
+                    <p class="story-teaser">${escapeHtml(story.teaser)}</p>
+                    <div class="story-meta">
+                        <div class="story-meta-item">
+                            <span class="story-meta-label">From:</span>
+                            <span>${escapeHtml(story.from_name || story.from_email)}</span>
+                        </div>
+                        <div class="story-meta-item">
+                            <span class="story-meta-label">Date:</span>
+                            <span>${formatDate(story.date)}</span>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+
+            contentEl.innerHTML = storiesHTML;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            contentEl.innerHTML = `<div class="error">Error: ${escapeHtml(message)}</div>`;
+        }
+
+        async function loadStories() {
+            try {
+                const response = await fetch('/api/stories');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const stories = await response.json();
+                renderStories(stories);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        loadStories();
+    </script>
+</body>
+</html>

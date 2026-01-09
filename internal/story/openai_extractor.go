@@ -56,6 +56,7 @@ Return a JSON object with this exact structure:
 IMPORTANT RULES:
 - Write the headline and teaser in the same language as the original email
 - Keep headlines SHORT: maximum 5-8 words
+- In the teaser, clarify the kind of content (blog post, news article, GitHub repo, podcast episode, video, research paper, etc.)
 - Each story MUST have a unique URL link to the actual article
 - If there is only one URL in the email, create only one story
 - Separate stories should have separate URLs - do not create multiple stories for a single URL
