@@ -97,6 +97,46 @@ func TestWriter_WriteMultipleStories(t *testing.T) {
 	}
 }
 
+func TestWriter_FilePermissions(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	stories := []Story{
+		{
+			Headline:  "Test Story",
+			Teaser:    "Test teaser",
+			URL:       "https://example.com",
+			FromEmail: "test@example.com",
+			FromName:  "Test User",
+			Date:      time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+		},
+	}
+
+	messageID := "<test@example.com>"
+	date := time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)
+
+	err := WriteStoriesToDir(tmpDir, messageID, date, stories)
+	if err != nil {
+		t.Fatalf("WriteStoriesToDir() unexpected error: %v", err)
+	}
+
+	// Check file permissions are 0600 (owner read/write only)
+	expectedFilename := "2006-01-02_test@example.com_1.json"
+	expectedPath := filepath.Join(tmpDir, expectedFilename)
+
+	fileInfo, err := os.Stat(expectedPath)
+	if err != nil {
+		t.Fatalf("Failed to stat file: %v", err)
+	}
+
+	mode := fileInfo.Mode()
+	expectedMode := os.FileMode(0600)
+
+	if mode.Perm() != expectedMode {
+		t.Errorf("File permissions = %04o, want %04o (owner read/write only for privacy)",
+			mode.Perm(), expectedMode)
+	}
+}
+
 func TestWriter_SanitizeMessageID(t *testing.T) {
 	tests := []struct {
 		name      string
