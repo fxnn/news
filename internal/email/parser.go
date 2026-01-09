@@ -167,9 +167,12 @@ func extractTextFromHTML(htmlContent string) string {
 			// Trim and skip empty text nodes
 			trimmed := strings.TrimSpace(n.Data)
 			if trimmed != "" {
-				// Add space before text if builder has content
+				// Add space before text if builder has content and doesn't end with whitespace
 				if text.Len() > 0 {
-					text.WriteString(" ")
+					lastChar := text.String()[text.Len()-1]
+					if lastChar != '\n' && lastChar != ' ' {
+						text.WriteString(" ")
+					}
 				}
 				text.WriteString(trimmed)
 			}
@@ -186,7 +189,8 @@ func extractTextFromHTML(htmlContent string) string {
 			}
 
 			if isBlockElement && text.Len() > 0 {
-				text.WriteString("\n")
+				// Add double newline for better paragraph separation
+				text.WriteString("\n\n")
 			}
 		} else {
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
