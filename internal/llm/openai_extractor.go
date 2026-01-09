@@ -1,4 +1,4 @@
-package story
+package llm
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/email"
+	"github.com/fxnn/news/internal/story"
 	openai "github.com/sashabaranov/go-openai"
 )
 
@@ -31,10 +32,10 @@ func NewOpenAIExtractor(cfg *config.LLMConfig) *OpenAIExtractor {
 
 // LLMResponse represents the JSON structure returned by the LLM
 type LLMResponse struct {
-	Stories []ExtractedStory `json:"stories"`
+	Stories []story.ExtractedStory `json:"stories"`
 }
 
-func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]Story, error) {
+func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error) {
 	prompt := fmt.Sprintf(`Extract news stories from this email. For each story, provide a headline, teaser, and URL.
 
 Subject: %s
@@ -96,9 +97,9 @@ IMPORTANT RULES:
 	}
 
 	// Convert extracted stories to full stories with email metadata
-	var stories []Story
+	var stories []story.Story
 	for _, extracted := range llmResp.Stories {
-		story := Story{
+		s := story.Story{
 			Headline:  extracted.Headline,
 			Teaser:    extracted.Teaser,
 			URL:       extracted.URL,
@@ -106,7 +107,7 @@ IMPORTANT RULES:
 			FromName:  emailData.FromName,
 			Date:      emailData.Date,
 		}
-		stories = append(stories, story)
+		stories = append(stories, s)
 	}
 
 	return stories, nil
