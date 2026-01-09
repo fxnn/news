@@ -61,10 +61,52 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: box-shadow 0.2s;
+            display: flex;
+            gap: 15px;
         }
 
         .story:hover {
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .story-avatar {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #fff;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .story-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+
+        .story-from {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .story-date {
+            font-size: 0.85em;
+            color: #999;
+            white-space: nowrap;
         }
 
         .story-headline {
@@ -83,26 +125,7 @@
 
         .story-teaser {
             color: #555;
-            margin-bottom: 15px;
             line-height: 1.5;
-        }
-
-        .story-meta {
-            display: flex;
-            gap: 15px;
-            font-size: 0.85em;
-            color: #777;
-            flex-wrap: wrap;
-        }
-
-        .story-meta-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .story-meta-label {
-            font-weight: 600;
         }
 
         .empty-state {
@@ -125,10 +148,23 @@
 
             .story {
                 padding: 15px;
+                gap: 12px;
+            }
+
+            .story-avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2em;
             }
 
             .story-headline {
                 font-size: 1.2em;
+            }
+
+            .story-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
             }
         }
     </style>
@@ -147,6 +183,41 @@
 
     <script>
         const contentEl = document.getElementById('content');
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        }
+
+        function getColorForSender(email) {
+            const hash = hashCode(email);
+            const hue = hash % 360;
+            const saturation = 65 + (hash % 20);
+            const lightness = 50 + (hash % 15);
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        function getInitials(name, email) {
+            if (!name || name === email) {
+                const emailParts = email.split('@')[0];
+                const parts = emailParts.split(/[._-]/);
+                if (parts.length >= 2) {
+                    return (parts[0][0] + parts[1][0]).toUpperCase();
+                }
+                return emailParts.substring(0, 2).toUpperCase();
+            }
+
+            const words = name.trim().split(/\s+/);
+            if (words.length >= 2) {
+                return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -175,26 +246,31 @@
                 return;
             }
 
-            const storiesHTML = stories.map(story => `
-                <article class="story">
-                    <h2 class="story-headline">
-                        <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
-                            ${escapeHtml(story.headline)}
-                        </a>
-                    </h2>
-                    <p class="story-teaser">${escapeHtml(story.teaser)}</p>
-                    <div class="story-meta">
-                        <div class="story-meta-item">
-                            <span class="story-meta-label">From:</span>
-                            <span>${escapeHtml(story.from_name || story.from_email)}</span>
+            const storiesHTML = stories.map(story => {
+                const initials = getInitials(story.from_name, story.from_email);
+                const color = getColorForSender(story.from_email);
+                const displayName = story.from_name || story.from_email;
+
+                return `
+                    <article class="story">
+                        <div class="story-avatar" style="background-color: ${color};">
+                            ${escapeHtml(initials)}
                         </div>
-                        <div class="story-meta-item">
-                            <span class="story-meta-label">Date:</span>
-                            <span>${formatDate(story.date)}</span>
+                        <div class="story-content">
+                            <div class="story-header">
+                                <div class="story-from">${escapeHtml(displayName)}</div>
+                                <div class="story-date">${formatDate(story.date)}</div>
+                            </div>
+                            <h2 class="story-headline">
+                                <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
+                                    ${escapeHtml(story.headline)}
+                                </a>
+                            </h2>
+                            <p class="story-teaser">${escapeHtml(story.teaser)}</p>
                         </div>
-                    </div>
-                </article>
-            `).join('');
+                    </article>
+                `;
+            }).join('');
 
             contentEl.innerHTML = storiesHTML;
         }
