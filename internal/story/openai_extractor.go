@@ -53,8 +53,16 @@ Return a JSON object with this exact structure:
   ]
 }
 
-If there are no stories, return {"stories": []}.
-Only include actual news stories or articles, not promotional content or advertisements.
+IMPORTANT RULES:
+- Write the headline and teaser in the same language as the original email
+- Keep headlines SHORT: maximum 5-8 words
+- Each story MUST have a unique URL link to the actual article
+- If there is only one URL in the email, create only one story
+- Separate stories should have separate URLs - do not create multiple stories for a single URL
+- Exclude order links, shopping links, or any paid content
+- Exclude promotional content or advertisements
+- Only include actual news stories or articles with readable content
+- If there are no valid stories with URLs, return {"stories": []}
 `, emailData.Subject, emailData.Body)
 
 	resp, err := e.client.CreateChatCompletion(
