@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/fxnn/news/internal/storyreader"
 )
+
+//go:embed index.html
+var indexHTML []byte
 
 func main() {
 	storydir := flag.String("storydir", "", "Path to the story directory (required)")
@@ -29,7 +33,8 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(indexHTML)
 	})
 
 	addr := ":" + *port
