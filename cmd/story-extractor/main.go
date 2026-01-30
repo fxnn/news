@@ -60,7 +60,7 @@ func main() {
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&cfgFile, "config", "", "config file (default is $HOME/config.toml)")
+	f.StringVar(&cfgFile, "config", "", "config file (default: ./story-extractor.toml or $HOME/story-extractor.toml)")
 	f.String("maildir", "", "Path to the Maildir directory")
 	f.String("storydir", "", "Output directory for story files")
 	f.Int("limit", 0, "Limit number of emails to process")
