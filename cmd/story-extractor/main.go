@@ -34,6 +34,9 @@ func main() {
 			if cfg.Storydir == "" {
 				return fmt.Errorf("storydir is required")
 			}
+			if cfg.LLM.APIKey == "" {
+				return fmt.Errorf("llm.api_key is required (via config or STORY_EXTRACTOR_LLM_API_KEY env var)")
+			}
 
 			// Initialize dependencies
 			log := logger.New(cfg.Verbose)
