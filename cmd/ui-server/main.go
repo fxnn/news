@@ -21,12 +21,12 @@ var indexHTML []byte
 func main() {
 	var cfgFile string
 	v := viper.New()
+	config.SetupUiServer(v)
 
 	cmd := &cobra.Command{
 		Use:   "ui-server",
 		Short: "Start the UI server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config.SetupUiServer(v)
 			cfg, err := config.LoadUiServer(v, cfgFile)
 			if err != nil {
 				return err
