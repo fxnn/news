@@ -37,6 +37,7 @@ type LLM struct {
 func SetupStoryExtractor(v *viper.Viper) {
 	v.SetDefault("llm.provider", "openai")
 	v.SetDefault("llm.model", "gpt-4o-mini")
+	v.SetDefault("llm.api_key", "")
 	v.SetDefault("llm.base_url", "https://api.openai.com/v1")
 	v.SetDefault("verbose", false)
 

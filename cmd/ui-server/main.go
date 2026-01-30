@@ -19,9 +19,21 @@ import (
 var indexHTML []byte
 
 func main() {
-	var cfgFile string
 	v := viper.New()
 	config.SetupUiServer(v)
+
+	cmd := NewUiServerCmd(v, nil)
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+type RunServerFunc func(cfg *config.UiServer) error
+
+func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
+	var cfgFile string
 
 	cmd := &cobra.Command{
 		Use:   "ui-server",
@@ -34,6 +46,11 @@ func main() {
 
 			if cfg.Storydir == "" {
 				return fmt.Errorf("storydir is required")
+			}
+
+			// Execute injected run function (for testing) or default logic
+			if runFn != nil {
+				return runFn(cfg)
 			}
 
 			log := logger.New(cfg.Verbose)
@@ -67,10 +84,7 @@ func main() {
 	v.BindPFlag("port", f.Lookup("port"))
 	v.BindPFlag("verbose", f.Lookup("verbose"))
 
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	return cmd
 }
 
 func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
