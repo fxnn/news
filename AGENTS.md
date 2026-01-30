@@ -20,6 +20,8 @@ We implement a newsletter reading app in Golang.
   all the previous tests.
 - Under no circumstances should you erase or alter tests just to get a commit to
   pass. If there is a genuine bug in a test, fix the test.
+- Always keep documentation (Readme, etc.) in sync with code changes, especially
+  when modifying CLI usage, configuration, or setup steps.
 
 ## Testing Practices
 
@@ -48,3 +50,13 @@ We implement a newsletter reading app in Golang.
   hidden dependencies, reasons?
 - Do not comment on the history. Do not comment "changed from struct to list" or
   "add for new b/w color scheme".
+- **Separation of Concerns**: Maintain strict separation between configurations for
+  different tools. Avoid shared packages (like `internal/cli`) if they couple
+  independent tools.
+- **Configuration Naming**: Use application-specific configuration filenames
+  (e.g., `app-name.toml`) instead of generic names like `config.toml` to avoid
+  ambiguity.
+- **Environment Variables**: Use distinct, application-specific prefixes
+  (e.g., `APP_NAME_`) for environment variables to prevent collisions.
+- **TOML Syntax**: Ensure configuration files respect syntax rules (e.g., global
+  keys must be defined *before* any table definitions).

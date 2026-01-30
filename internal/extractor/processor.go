@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/fxnn/news/internal/cli"
+	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/email"
 	"github.com/fxnn/news/internal/maildir"
 	"github.com/fxnn/news/internal/story"
@@ -14,7 +14,7 @@ import (
 
 // Processor orchestrates the story extraction workflow
 type Processor struct {
-	opts      *cli.Options
+	cfg       *config.StoryExtractor
 	log       *slog.Logger
 	extractor story.Extractor
 }
@@ -28,9 +28,9 @@ type Result struct {
 }
 
 // NewProcessor creates a new story extraction processor
-func NewProcessor(opts *cli.Options, log *slog.Logger, extractor story.Extractor) *Processor {
+func NewProcessor(cfg *config.StoryExtractor, log *slog.Logger, extractor story.Extractor) *Processor {
 	return &Processor{
-		opts:      opts,
+		cfg:       cfg,
 		log:       log,
 		extractor: extractor,
 	}
@@ -39,7 +39,7 @@ func NewProcessor(opts *cli.Options, log *slog.Logger, extractor story.Extractor
 // Run executes the story extraction workflow
 func (p *Processor) Run() (*Result, error) {
 	// Read all email files from the Maildir
-	emailPaths, err := maildir.Read(p.opts.Maildir)
+	emailPaths, err := maildir.Read(p.cfg.Maildir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read maildir: %w", err)
 	}
@@ -47,9 +47,9 @@ func (p *Processor) Run() (*Result, error) {
 	p.log.Info("found emails", "count", len(emailPaths))
 
 	// Apply limit if specified
-	if p.opts.Limit > 0 && len(emailPaths) > p.opts.Limit {
-		emailPaths = emailPaths[:p.opts.Limit]
-		p.log.Info("limiting email processing", "limit", p.opts.Limit)
+	if p.cfg.Limit > 0 && len(emailPaths) > p.cfg.Limit {
+		emailPaths = emailPaths[:p.cfg.Limit]
+		p.log.Info("limiting email processing", "limit", p.cfg.Limit)
 	}
 
 	result := &Result{
@@ -99,7 +99,7 @@ func (p *Processor) processEmail(index int, path string) error {
 	}
 
 	// Check if stories already exist (incremental processing)
-	exists, err := story.StoriesExist(p.opts.Storydir, parsedEmail.MessageID, parsedEmail.Date)
+	exists, err := story.StoriesExist(p.cfg.Storydir, parsedEmail.MessageID, parsedEmail.Date)
 	if err != nil {
 		p.log.Warn("failed to check for existing stories", "path", path, "error", err)
 	} else if exists {
@@ -108,7 +108,7 @@ func (p *Processor) processEmail(index int, path string) error {
 	}
 
 	// Log email details if requested
-	if p.opts.LogHeaders || p.opts.LogBodies {
+	if p.cfg.LogHeaders || p.cfg.LogBodies {
 		logArgs := []any{
 			"index", index + 1,
 			"subject", parsedEmail.Subject,
@@ -119,7 +119,7 @@ func (p *Processor) processEmail(index int, path string) error {
 			"body_length", len(parsedEmail.Body),
 		}
 
-		if p.opts.LogBodies {
+		if p.cfg.LogBodies {
 			logArgs = append(logArgs, "body", parsedEmail.Body)
 		}
 
@@ -138,7 +138,7 @@ func (p *Processor) processEmail(index int, path string) error {
 	p.log.Info("extracted stories", "path", path, "count", len(stories), "duration_ms", duration.Milliseconds())
 
 	// Log stories if requested
-	if p.opts.LogStories {
+	if p.cfg.LogStories {
 		for i, s := range stories {
 			p.log.Debug("story",
 				"index", i+1,
@@ -149,7 +149,7 @@ func (p *Processor) processEmail(index int, path string) error {
 	}
 
 	// Save stories to directory
-	err = story.WriteStoriesToDir(p.opts.Storydir, parsedEmail.MessageID, parsedEmail.Date, stories)
+	err = story.WriteStoriesToDir(p.cfg.Storydir, parsedEmail.MessageID, parsedEmail.Date, stories)
 	if err != nil {
 		return fmt.Errorf("failed to write stories: %w", err)
 	}

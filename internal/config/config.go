@@ -2,42 +2,98 @@ package config
 
 import (
 	"fmt"
-	"os"
+	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/spf13/viper"
 )
 
-type Config struct {
-	LLM LLMConfig `toml:"llm"`
+// StoryExtractor configuration for the extraction CLI tool
+type StoryExtractor struct {
+	LLM        LLM    `mapstructure:"llm"`
+	Maildir    string `mapstructure:"maildir"`
+	Storydir   string `mapstructure:"storydir"`
+	Limit      int    `mapstructure:"limit"`
+	Verbose    bool   `mapstructure:"verbose"`
+	LogHeaders bool   `mapstructure:"log_headers"`
+	LogBodies  bool   `mapstructure:"log_bodies"`
+	LogStories bool   `mapstructure:"log_stories"`
 }
 
-type LLMConfig struct {
-	Provider string `toml:"provider"`
-	Model    string `toml:"model"`
-	APIKey   string `toml:"api_key"`
-	BaseURL  string `toml:"base_url"`
+// UiServer configuration for the web server
+type UiServer struct {
+	Storydir string `mapstructure:"storydir"`
+	Port     int    `mapstructure:"port"`
+	Verbose  bool   `mapstructure:"verbose"`
 }
 
-func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
+type LLM struct {
+	Provider string `mapstructure:"provider"`
+	Model    string `mapstructure:"model"`
+	APIKey   string `mapstructure:"api_key"`
+	BaseURL  string `mapstructure:"base_url"`
+}
+
+// SetupStoryExtractor configures defaults for the story extractor
+func SetupStoryExtractor(v *viper.Viper) {
+	v.SetDefault("llm.provider", "openai")
+	v.SetDefault("llm.model", "gpt-4o-mini")
+	v.SetDefault("llm.base_url", "https://api.openai.com/v1")
+	v.SetDefault("verbose", false)
+
+	v.SetEnvPrefix("STORY_EXTRACTOR")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	v.AutomaticEnv()
+}
+
+// SetupUiServer configures defaults for the UI server
+func SetupUiServer(v *viper.Viper) {
+	v.SetDefault("port", 8080)
+	v.SetDefault("verbose", false)
+
+	v.SetEnvPrefix("UI_SERVER")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	v.AutomaticEnv()
+}
+
+func loadConfig(v *viper.Viper, cfgFile string, configName string, target interface{}) error {
+	if cfgFile != "" {
+		v.SetConfigFile(cfgFile)
+	} else {
+		v.AddConfigPath(".")
+		v.AddConfigPath("$HOME")
+		v.SetConfigName(configName)
+		v.SetConfigType("toml")
 	}
 
-	var cfg Config
-	if err := toml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse TOML config: %w", err)
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return fmt.Errorf("error reading config file: %w", err)
+		}
+		if cfgFile != "" {
+			return fmt.Errorf("error reading config file %s: %w", cfgFile, err)
+		}
 	}
 
-	// Allow environment variable override for API key (more secure)
-	if envKey := os.Getenv("OPENAI_API_KEY"); envKey != "" {
-		cfg.LLM.APIKey = envKey
+	if err := v.Unmarshal(target); err != nil {
+		return fmt.Errorf("unable to decode config: %w", err)
 	}
+	return nil
+}
 
-	// Validate that we have an API key from either source
-	if cfg.LLM.APIKey == "" {
-		return nil, fmt.Errorf("API key is required (set in config file or OPENAI_API_KEY environment variable)")
+// LoadStoryExtractor loads configuration for the extractor
+func LoadStoryExtractor(v *viper.Viper, cfgFile string) (*StoryExtractor, error) {
+	var cfg StoryExtractor
+	if err := loadConfig(v, cfgFile, "story-extractor", &cfg); err != nil {
+		return nil, err
 	}
+	return &cfg, nil
+}
 
+// LoadUiServer loads configuration for the server
+func LoadUiServer(v *viper.Viper, cfgFile string) (*UiServer, error) {
+	var cfg UiServer
+	if err := loadConfig(v, cfgFile, "ui-server", &cfg); err != nil {
+		return nil, err
+	}
 	return &cfg, nil
 }

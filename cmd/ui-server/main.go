@@ -3,47 +3,73 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
-	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
+	"github.com/fxnn/news/internal/config"
+	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/story"
 	"github.com/fxnn/news/internal/storyreader"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 //go:embed index.html
 var indexHTML []byte
 
 func main() {
-	storydir := flag.String("storydir", "", "Path to the story directory (required)")
-	port := flag.String("port", "8080", "Port to listen on")
+	var cfgFile string
+	v := viper.New()
 
-	flag.Parse()
+	cmd := &cobra.Command{
+		Use:   "ui-server",
+		Short: "Start the UI server",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			config.SetupUiServer(v)
+			cfg, err := config.LoadUiServer(v, cfgFile)
+			if err != nil {
+				return err
+			}
 
-	if *storydir == "" {
-		fmt.Fprintln(os.Stderr, "Error: --storydir is required")
-		flag.Usage()
-		os.Exit(1)
+			if cfg.Storydir == "" {
+				return fmt.Errorf("storydir is required")
+			}
+
+			log := logger.New(cfg.Verbose)
+			addr := fmt.Sprintf(":%d", cfg.Port)
+			log.Info("Starting UI server", "addr", addr, "storydir", cfg.Storydir)
+
+			http.HandleFunc("/api/stories", func(w http.ResponseWriter, r *http.Request) {
+				handleStories(w, r, cfg.Storydir)
+			})
+
+			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Write(indexHTML)
+			})
+
+			if err := http.ListenAndServe(addr, nil); err != nil {
+				return err
+			}
+
+			return nil
+		},
 	}
 
-	// Set up HTTP routes
-	http.HandleFunc("/api/stories", func(w http.ResponseWriter, r *http.Request) {
-		handleStories(w, r, *storydir)
-	})
+	f := cmd.Flags()
+	f.StringVar(&cfgFile, "config", "", "config file")
+	f.String("storydir", "", "Path to stories")
+	f.Int("port", 8080, "Port to listen on")
+	f.Bool("verbose", false, "Enable verbose output")
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(indexHTML)
-	})
+	v.BindPFlag("storydir", f.Lookup("storydir"))
+	v.BindPFlag("port", f.Lookup("port"))
+	v.BindPFlag("verbose", f.Lookup("verbose"))
 
-	addr := ":" + *port
-	log.Printf("Starting UI server on http://localhost%s\n", addr)
-	log.Printf("Stories directory: %s\n", *storydir)
-
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatal(err)
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
 
@@ -59,7 +85,6 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
 		return
 	}
 
-	// Ensure we always return an array, never null
 	if stories == nil {
 		stories = []story.Story{}
 	}
