@@ -122,42 +122,47 @@ poll imap.example.com
 The story extractor processes newsletter emails using AI to extract individual news stories.
 
 #### Configuration
-
-Create a `config.toml` file (copy from `config.example.toml`):
-
+ 
+The application uses a unified configuration system with the following lower-to-higher precedence:
+1. Defaults
+2. Configuration File (`story-extractor.toml`)
+3. Environment Variables
+4. Command Line Flags
+ 
+**1. Config File**
+ 
+Create a `story-extractor.toml` file (default locations: `./story-extractor.toml`, `$HOME/story-extractor.toml`, or specify via `--config`):
+ 
 ```toml
+# Global settings
+maildir = "/path/to/maildir"
+storydir = "/path/to/stories"
+verbose = false
+
 [llm]
 provider = "openai"
 model = "gpt-4o-mini"
-api_key = ""
+api_key = "your-api-key"        # Optional, prefer env var
 base_url = "https://api.openai.com/v1"
 ```
-
-**Supported models:**
-- `gpt-4o-mini` (recommended, fast and cost-effective)
-- `gpt-4o` (higher quality, better for complex newsletters with many stories)
-
-**API Key Security (IMPORTANT):**
-
-The application requires an OpenAI API key. You have two options:
-
-**Option 1: Environment Variable (Recommended)**
+ 
+**2. Environment Variables**
+ 
+Environment variables override config file values.
+ 
+*   **Prefix**: `STORY_EXTRACTOR_`
+*   **Mapping**: `.` and `-` are replaced with `_`
+ 
+Examples:
+*   `STORY_EXTRACTOR_LLM_API_KEY` overrides `[llm] api_key`
+*   `STORY_EXTRACTOR_MAILDIR` overrides `maildir`
+*   `STORY_EXTRACTOR_VERBOSE=true` sets verbose mode
+ 
+**API Key Security (Recommended):**
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
-./story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config config.toml
+export STORY_EXTRACTOR_LLM_API_KEY="your-api-key-here"
 ```
-
-**Option 2: Config File (Less Secure)**
-```toml
-api_key = "your-api-key-here"
-```
-
-⚠️ **Security Notes:**
-- Never commit your `config.toml` with real API keys to version control
-- `*.toml` files are automatically gitignored (except `.example.toml`)
-- Environment variables are more secure as they won't be accidentally committed
-- The environment variable `OPENAI_API_KEY` overrides the config file value
-
+ 
 #### Build
 
 ```bash
@@ -219,16 +224,21 @@ go build ./cmd/ui-server
 ```
 
 #### Usage
-
-```bash
-./ui-server --storydir ~/stories
-```
-
-Or specify a custom port:
-```bash
-./ui-server --storydir ~/stories --port 3000
-```
-
+ 
+ ```bash
+ ./ui-server --storydir ~/stories
+ ```
+ 
+ Or specify a custom port:
+ ```bash
+ ./ui-server --storydir ~/stories --port 3000
+ ```
+ 
+ **Environment Variables:**
+ *   **Prefix**: `UI_SERVER_`
+ *   Examples: `UI_SERVER_PORT=3000`, `UI_SERVER_STORYDIR=~/stories`
+ *   **Config File**: `ui-server.toml` (defaults: `.`, `$HOME`)
+ 
 #### CLI Flags
 
 Required:
@@ -264,7 +274,7 @@ go build ./cmd/story-extractor
 ./story-extractor \
   --maildir ~/Maildir/newsletters \
   --storydir ~/stories \
-  --config config.toml
+  --config story-extractor.toml
 
 # 3. Start the UI server
 go build ./cmd/ui-server
@@ -281,7 +291,7 @@ open http://localhost:8080
 ./story-extractor \
   --maildir ~/Maildir/newsletters \
   --storydir ~/stories \
-  --config config.toml \
+  --config story-extractor.toml \
   --limit 5 \
   --verbose
 ```
@@ -291,7 +301,7 @@ open http://localhost:8080
 ./story-extractor \
   --maildir ~/Maildir/newsletters \
   --storydir ~/stories \
-  --config config.toml \
+  --config story-extractor.toml \
   --limit 1 \
   --log-headers \
   --log-bodies
@@ -301,7 +311,7 @@ open http://localhost:8080
 Set up a cron job to run daily:
 ```bash
 # crontab -e
-0 8 * * * /usr/local/bin/mbsync -a && /path/to/story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config ~/config.toml
+0 8 * * * /usr/local/bin/mbsync -a && /path/to/story-extractor --maildir ~/Maildir/newsletters --storydir ~/stories --config ~/story-extractor.toml
 ```
 
 ## Development

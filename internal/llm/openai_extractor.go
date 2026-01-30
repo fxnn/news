@@ -19,7 +19,7 @@ type OpenAIExtractor struct {
 }
 
 // NewOpenAIExtractor creates a new OpenAI-based story extractor
-func NewOpenAIExtractor(cfg *config.LLMConfig) *OpenAIExtractor {
+func NewOpenAIExtractor(cfg *config.LLM) *OpenAIExtractor {
 	clientConfig := openai.DefaultConfig(cfg.APIKey)
 	if cfg.BaseURL != "" {
 		clientConfig.BaseURL = cfg.BaseURL

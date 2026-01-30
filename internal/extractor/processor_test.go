@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fxnn/news/internal/cli"
+	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/story"
 )
@@ -20,7 +20,7 @@ func TestProcessor_Run_EmptyMaildir(t *testing.T) {
 	os.MkdirAll(filepath.Join(tmpMaildir, "new"), 0755)
 	os.MkdirAll(filepath.Join(tmpMaildir, "tmp"), 0755)
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Verbose:  false,
@@ -33,7 +33,7 @@ func TestProcessor_Run_EmptyMaildir(t *testing.T) {
 		},
 	}
 
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result, err := processor.Run()
 
 	if err != nil {
@@ -71,7 +71,7 @@ This is a test email body.
 		t.Fatal(err)
 	}
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Verbose:  false,
@@ -84,7 +84,7 @@ This is a test email body.
 		},
 	}
 
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result, err := processor.Run()
 
 	if err != nil {
@@ -136,7 +136,7 @@ This is a test email body.
 		t.Fatal(err)
 	}
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Verbose:  false,
@@ -150,7 +150,7 @@ This is a test email body.
 	}
 
 	// First run - should process the email
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result1, err := processor.Run()
 	if err != nil {
 		t.Fatalf("Run() unexpected error: %v", err)
@@ -199,7 +199,7 @@ This is a test email body.
 		}
 	}
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Limit:    2,
@@ -213,7 +213,7 @@ This is a test email body.
 		},
 	}
 
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result, err := processor.Run()
 
 	if err != nil {
@@ -243,7 +243,7 @@ func TestProcessor_Run_InvalidEmail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Verbose:  false,
@@ -256,7 +256,7 @@ func TestProcessor_Run_InvalidEmail(t *testing.T) {
 		},
 	}
 
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result, err := processor.Run()
 
 	if err != nil {
@@ -327,7 +327,7 @@ This should be skipped.
 		t.Fatal(err)
 	}
 
-	opts := &cli.Options{
+	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
 		Storydir: tmpStorydir,
 		Verbose:  false,
@@ -340,7 +340,7 @@ This should be skipped.
 		},
 	}
 
-	processor := NewProcessor(opts, log, extractor)
+	processor := NewProcessor(cfg, log, extractor)
 	result, err := processor.Run()
 
 	if err != nil {
