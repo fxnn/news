@@ -15,13 +15,12 @@ import (
 func main() {
 	var cfgFile string
 	v := viper.New()
+	config.SetupStoryExtractor(v)
 
 	cmd := &cobra.Command{
 		Use:   "story-extractor",
 		Short: "Extract stories from emails",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config.SetupStoryExtractor(v)
-
 			cfg, err := config.LoadStoryExtractor(v, cfgFile)
 			if err != nil {
 				return err
