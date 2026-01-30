@@ -85,6 +85,9 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
 		return
 	}
 
+	// storyreader.ReadStories returns nil if no stories are found.
+	// We explicitly initialize an empty slice to ensure the API returns "[]" (empty JSON array)
+	// instead of "null", which simplifies client-side handling.
 	if stories == nil {
 		stories = []story.Story{}
 	}
