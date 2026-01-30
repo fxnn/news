@@ -58,7 +58,7 @@ func main() {
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&cfgFile, "config", "", "config file")
+	f.StringVar(&cfgFile, "config", "", "config file (default: ./ui-server.toml or $HOME/ui-server.toml)")
 	f.String("storydir", "", "Path to stories")
 	f.Int("port", 8080, "Port to listen on")
 	f.Bool("verbose", false, "Enable verbose output")
