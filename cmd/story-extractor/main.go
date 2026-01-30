@@ -13,9 +13,21 @@ import (
 )
 
 func main() {
-	var cfgFile string
 	v := viper.New()
 	config.SetupStoryExtractor(v)
+
+	cmd := NewStoryExtractorCmd(v, nil)
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+type RunExtractorFunc func(cfg *config.StoryExtractor) error
+
+func NewStoryExtractorCmd(v *viper.Viper, runFn RunExtractorFunc) *cobra.Command {
+	var cfgFile string
 
 	cmd := &cobra.Command{
 		Use:   "story-extractor",
@@ -35,6 +47,11 @@ func main() {
 			}
 			if cfg.LLM.APIKey == "" {
 				return fmt.Errorf("llm.api_key is required (via config or STORY_EXTRACTOR_LLM_API_KEY env var)")
+			}
+
+			// Execute injected run function (for testing) or default logic
+			if runFn != nil {
+				return runFn(cfg)
 			}
 
 			// Initialize dependencies
@@ -76,8 +93,5 @@ func main() {
 	v.BindPFlag("log_bodies", f.Lookup("log-bodies"))
 	v.BindPFlag("log_stories", f.Lookup("log-stories"))
 
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	return cmd
 }
