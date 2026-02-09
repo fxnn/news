@@ -56,8 +56,7 @@ func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error)
 			ResponseFormat: &openai.ChatCompletionResponseFormat{
 				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 			},
-			MaxTokens:   4096, // Allow longer responses for emails with many stories
-			Temperature: 0.3,  // Low temperature for consistent, focused extraction
+			MaxCompletionTokens: 4096, // Allow longer responses for emails with many stories
 		},
 	)
 
