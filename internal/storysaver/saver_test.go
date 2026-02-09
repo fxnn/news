@@ -135,3 +135,39 @@ func TestSave_CreatesSavedirIfNotExists(t *testing.T) {
 		t.Errorf("saved file does not exist: %v", err)
 	}
 }
+
+func TestUnsave_RemovesFile(t *testing.T) {
+	savedir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Unsave(savedir, "story.json"); err != nil {
+		t.Fatalf("Unsave() unexpected error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(savedir, "story.json")); !os.IsNotExist(err) {
+		t.Error("Unsave() file still exists after removal")
+	}
+}
+
+func TestUnsave_FileNotFound(t *testing.T) {
+	savedir := t.TempDir()
+
+	err := Unsave(savedir, "nonexistent.json")
+	if err == nil {
+		t.Error("Unsave() expected error for nonexistent file, got nil")
+	}
+}
+
+func TestUnsave_RejectsPathTraversal(t *testing.T) {
+	savedir := t.TempDir()
+
+	for _, filename := range []string{"../etc/passwd", "foo/bar.json", "..\\evil.json"} {
+		err := Unsave(savedir, filename)
+		if err == nil {
+			t.Errorf("Unsave(%q) expected error for path traversal, got nil", filename)
+		}
+	}
+}

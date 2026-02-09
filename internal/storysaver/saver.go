@@ -66,6 +66,20 @@ func Save(storydir, savedir, filename string) error {
 	return nil
 }
 
+// Unsave removes a saved story from savedir.
+func Unsave(savedir, filename string) error {
+	if err := validateFilename(filename); err != nil {
+		return err
+	}
+
+	path := filepath.Join(savedir, filename)
+	if err := os.Remove(path); err != nil {
+		return fmt.Errorf("failed to remove saved story: %w", err)
+	}
+
+	return nil
+}
+
 func validateFilename(filename string) error {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") ||
 		strings.Contains(filename, "..") || !strings.HasSuffix(filename, ".json") {
