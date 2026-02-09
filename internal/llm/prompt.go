@@ -24,7 +24,7 @@ Return a JSON object with this exact structure:
   "stories": [
     {
       "headline": "Story headline",
-      "teaser": "Content type prefix + reused summary if present; otherwise 2-4 sentences",
+      "teaser": "Article. Short teaser text about the linked content.",
       "url": "https://example.com/article"
     }
   ]
