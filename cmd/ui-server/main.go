@@ -49,6 +49,10 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 				return fmt.Errorf("storydir is required")
 			}
 
+			if cfg.Savedir == "" {
+				return fmt.Errorf("savedir is required")
+			}
+
 			// Execute injected run function (for testing) or default logic
 			if runFn != nil {
 				return runFn(cfg)
@@ -80,10 +84,12 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVar(&cfgFile, "config", "", "config file (default: ./ui-server.toml or $HOME/ui-server.toml)")
 	f.String("storydir", "", "Path to stories")
+	f.String("savedir", "", "Path to saved stories")
 	f.Int("port", 8080, "Port to listen on")
 	f.Bool("verbose", false, "Enable verbose output")
 
 	v.BindPFlag("storydir", f.Lookup("storydir"))
+	v.BindPFlag("savedir", f.Lookup("savedir"))
 	v.BindPFlag("port", f.Lookup("port"))
 	v.BindPFlag("verbose", f.Lookup("verbose"))
 
