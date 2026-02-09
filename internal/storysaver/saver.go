@@ -64,10 +64,16 @@ func Save(storydir, savedir, filename string) error {
 	}
 	tmpPath := tmpFile.Name()
 
-	if _, err := tmpFile.Write(data); err != nil {
+	n, err := tmpFile.Write(data)
+	if err != nil {
 		tmpFile.Close()
 		os.Remove(tmpPath)
 		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+	if n != len(data) {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("short write: wrote %d of %d bytes", n, len(data))
 	}
 
 	if err := tmpFile.Close(); err != nil {
