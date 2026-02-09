@@ -1,4 +1,4 @@
-.PHONY: all build test cover fmt vet clean help
+.PHONY: all build story-extractor ui-server test cover fmt vet clean help
 
 all: fmt vet test build ## Format, vet, test, and build everything
 
