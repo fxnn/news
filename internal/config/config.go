@@ -22,6 +22,7 @@ type StoryExtractor struct {
 // UiServer configuration for the web server
 type UiServer struct {
 	Storydir string `mapstructure:"storydir"`
+	Savedir  string `mapstructure:"savedir"`
 	Port     int    `mapstructure:"port"`
 	Verbose  bool   `mapstructure:"verbose"`
 }
@@ -48,6 +49,7 @@ func SetupStoryExtractor(v *viper.Viper) {
 
 // SetupUiServer configures defaults for the UI server
 func SetupUiServer(v *viper.Viper) {
+	v.SetDefault("savedir", "")
 	v.SetDefault("port", 8080)
 	v.SetDefault("verbose", false)
 

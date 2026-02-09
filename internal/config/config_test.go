@@ -102,3 +102,42 @@ func TestLoadUiServer_EnvVars(t *testing.T) {
 		t.Errorf("Verbose = %v, want true", cfg.Verbose)
 	}
 }
+
+func TestLoadUiServer_SavedirFromEnvVar(t *testing.T) {
+	t.Setenv("UI_SERVER_SAVEDIR", "/tmp/saved-stories")
+
+	v := viper.New()
+	SetupUiServer(v)
+	cfg, err := LoadUiServer(v, "")
+	if err != nil {
+		t.Fatalf("LoadUiServer() error = %v", err)
+	}
+
+	if cfg.Savedir != "/tmp/saved-stories" {
+		t.Errorf("Savedir = %v, want /tmp/saved-stories", cfg.Savedir)
+	}
+}
+
+func TestLoadUiServer_SavedirFromConfigFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	configContent := `
+storydir = "/tmp/stories"
+savedir = "/tmp/saved"
+port = 8080
+`
+	configPath := filepath.Join(tmpDir, "ui-server.toml")
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	v := viper.New()
+	SetupUiServer(v)
+	cfg, err := LoadUiServer(v, configPath)
+	if err != nil {
+		t.Fatalf("LoadUiServer() error = %v", err)
+	}
+
+	if cfg.Savedir != "/tmp/saved" {
+		t.Errorf("Savedir = %v, want /tmp/saved", cfg.Savedir)
+	}
+}
