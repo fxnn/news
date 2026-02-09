@@ -56,7 +56,7 @@ func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error)
 			ResponseFormat: &openai.ChatCompletionResponseFormat{
 				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 			},
-			MaxCompletionTokens: 4096, // Allow longer responses for emails with many stories
+			MaxCompletionTokens: 16384, // Reasoning models spend tokens on thinking, so allow headroom
 		},
 	)
 
@@ -66,6 +66,10 @@ func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error)
 
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no response from OpenAI API")
+	}
+
+	if resp.Choices[0].FinishReason == openai.FinishReasonLength {
+		return nil, fmt.Errorf("LLM response truncated: output exceeded token limit")
 	}
 
 	var llmResp LLMResponse
