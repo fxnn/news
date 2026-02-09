@@ -141,7 +141,8 @@ func TestLoadUiServer_SavedirFromConfigFile(t *testing.T) {
 	}
 }
 
-// quote wraps a path in double quotes for TOML values.
+// quote wraps a path in single quotes for TOML values (TOML literal strings),
+// so that backslashes in Windows paths are not treated as escapes.
 func quote(s string) string {
-	return "\"" + s + "\""
+	return "'" + s + "'"
 }
