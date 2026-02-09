@@ -55,3 +55,83 @@ func TestListSavedFilenames_NonExistentDir(t *testing.T) {
 		t.Error("ListSavedFilenames() expected error for nonexistent directory, got nil")
 	}
 }
+
+func TestSave_CopiesFile(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	content := []byte(`{"headline":"Test"}`)
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Save(storydir, savedir, "story.json"); err != nil {
+		t.Fatalf("Save() unexpected error: %v", err)
+	}
+
+	saved, err := os.ReadFile(filepath.Join(savedir, "story.json"))
+	if err != nil {
+		t.Fatalf("saved file not found: %v", err)
+	}
+	if string(saved) != string(content) {
+		t.Errorf("saved content = %q, want %q", saved, content)
+	}
+}
+
+func TestSave_FileNotFound(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	err := Save(storydir, savedir, "nonexistent.json")
+	if err == nil {
+		t.Error("Save() expected error for nonexistent file, got nil")
+	}
+}
+
+func TestSave_AlreadyExists(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	content := []byte(`{"headline":"Test"}`)
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), content, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := Save(storydir, savedir, "story.json")
+	if err == nil {
+		t.Error("Save() expected error for already saved file, got nil")
+	}
+}
+
+func TestSave_RejectsPathTraversal(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	for _, filename := range []string{"../etc/passwd", "foo/bar.json", "..\\evil.json"} {
+		err := Save(storydir, savedir, filename)
+		if err == nil {
+			t.Errorf("Save(%q) expected error for path traversal, got nil", filename)
+		}
+	}
+}
+
+func TestSave_CreatesSavedirIfNotExists(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := filepath.Join(t.TempDir(), "new-subdir")
+
+	content := []byte(`{"headline":"Test"}`)
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Save(storydir, savedir, "story.json"); err != nil {
+		t.Fatalf("Save() unexpected error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(savedir, "story.json")); err != nil {
+		t.Errorf("saved file does not exist: %v", err)
+	}
+}
