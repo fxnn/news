@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/fxnn/news/internal/config"
@@ -11,6 +12,11 @@ import (
 )
 
 func newFakeOpenAIServer(t *testing.T, bodyCh chan<- map[string]any) *httptest.Server {
+	t.Helper()
+	return newFakeOpenAIServerWithResponse(t, bodyCh, "stop", `{"stories":[]}`)
+}
+
+func newFakeOpenAIServerWithResponse(t *testing.T, bodyCh chan<- map[string]any, finishReason, content string) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body map[string]any
@@ -23,7 +29,10 @@ func newFakeOpenAIServer(t *testing.T, bodyCh chan<- map[string]any) *httptest.S
 		}
 		if err := json.NewEncoder(w).Encode(map[string]any{
 			"choices": []map[string]any{
-				{"message": map[string]any{"content": `{"stories":[]}`}},
+				{
+					"message":       map[string]any{"content": content},
+					"finish_reason": finishReason,
+				},
 			},
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -58,6 +67,30 @@ func TestExtract_UsesMaxCompletionTokens(t *testing.T) {
 	}
 	if _, ok := requestBody["max_completion_tokens"]; !ok {
 		t.Error("request body missing 'max_completion_tokens' field")
+	}
+}
+
+func TestExtract_ReturnsErrorOnTruncatedResponse(t *testing.T) {
+	truncatedJSON := `{"stories":[{"headline":"Test","teaser":"A te`
+	server := newFakeOpenAIServerWithResponse(t, nil, "length", truncatedJSON)
+	defer server.Close()
+
+	cfg := &config.LLM{
+		APIKey:  "test-key",
+		BaseURL: server.URL,
+		Model:   "gpt-4o",
+	}
+	extractor := NewOpenAIExtractor(cfg)
+
+	_, err := extractor.Extract(&email.Email{
+		Subject: "Test",
+		Body:    "Test body",
+	})
+	if err == nil {
+		t.Fatal("Extract() should return error for truncated response")
+	}
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Errorf("error should mention truncation, got: %v", err)
 	}
 }
 
