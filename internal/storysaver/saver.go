@@ -12,7 +12,7 @@ import (
 // Used to determine which stories have been saved for later.
 func ListSavedFilenames(savedir string) (map[string]bool, error) {
 	if _, err := os.Stat(savedir); errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("directory does not exist: %s", savedir)
+		return map[string]bool{}, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to access savedir: %w", err)
 	}

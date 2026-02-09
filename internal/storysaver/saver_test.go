@@ -50,9 +50,12 @@ func TestListSavedFilenames_WithFiles(t *testing.T) {
 }
 
 func TestListSavedFilenames_NonExistentDir(t *testing.T) {
-	_, err := ListSavedFilenames("/nonexistent/directory")
-	if err == nil {
-		t.Error("ListSavedFilenames() expected error for nonexistent directory, got nil")
+	filenames, err := ListSavedFilenames("/nonexistent/directory")
+	if err != nil {
+		t.Fatalf("ListSavedFilenames() unexpected error: %v", err)
+	}
+	if len(filenames) != 0 {
+		t.Errorf("ListSavedFilenames() returned %d filenames, want 0", len(filenames))
 	}
 }
 

@@ -244,7 +244,7 @@ func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
 	}
 }
 
-func TestHandleStories_FailsOnSavedirError(t *testing.T) {
+func TestHandleStories_NonExistentSavedirIsEmpty(t *testing.T) {
 	storydir := t.TempDir()
 
 	testStories := []story.Story{
@@ -264,14 +264,13 @@ func TestHandleStories_FailsOnSavedirError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Pass a nonexistent savedir to trigger an error from ListSavedFilenames
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, storydir, "/nonexistent/savedir")
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Status = %d, want %d", w.Code, http.StatusInternalServerError)
+	if w.Code != http.StatusOK {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusOK)
 	}
 }
 
