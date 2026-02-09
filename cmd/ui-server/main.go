@@ -11,6 +11,7 @@ import (
 	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/story"
 	"github.com/fxnn/news/internal/storyreader"
+	"github.com/fxnn/news/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -83,6 +84,14 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	v.BindPFlag("storydir", f.Lookup("storydir"))
 	v.BindPFlag("port", f.Lookup("port"))
 	v.BindPFlag("verbose", f.Lookup("verbose"))
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print build version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), version.String())
+		},
+	})
 
 	return cmd
 }
