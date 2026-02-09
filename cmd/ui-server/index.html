@@ -42,6 +42,34 @@
             font-size: 0.9em;
         }
 
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .filter-tab {
+            padding: 6px 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: #fff;
+            color: #555;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover {
+            border-color: #1976d2;
+            color: #1976d2;
+        }
+
+        .filter-tab.active {
+            background: #1976d2;
+            border-color: #1976d2;
+            color: #fff;
+        }
+
         .loading, .error {
             background-color: #fff;
             padding: 40px;
@@ -87,6 +115,7 @@
         .story-content {
             flex: 1;
             min-width: 0;
+            position: relative;
         }
 
         .story-header {
@@ -113,6 +142,7 @@
         .story-headline {
             font-size: 1.4em;
             margin-bottom: 10px;
+            padding-right: 36px;
         }
 
         .story-headline a {
@@ -127,6 +157,32 @@
         .story-teaser {
             color: #555;
             line-height: 1.5;
+        }
+
+        .save-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .save-btn:hover {
+            color: #1976d2;
+        }
+
+        .save-btn.saved {
+            color: #1976d2;
+        }
+
+        .save-btn svg {
+            width: 24px;
+            height: 24px;
+            display: block;
         }
 
         .empty-state {
@@ -175,6 +231,10 @@
         <header>
             <h1>News Stories</h1>
             <div class="subtitle">Stories extracted from your newsletters</div>
+            <nav class="filter-tabs">
+                <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
+                <button class="filter-tab" data-filter="saved" onclick="setFilter('saved')">Saved</button>
+            </nav>
         </header>
 
         <div id="content">
@@ -184,6 +244,11 @@
 
     <script>
         const contentEl = document.getElementById('content');
+        let allStories = [];
+        let currentFilter = 'all';
+
+        const bookmarkOutline = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>';
+        const bookmarkFilled = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>';
 
         function hashCode(str) {
             let hash = 0;
@@ -249,9 +314,30 @@
             }
         }
 
-        function renderStories(stories) {
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+            renderStories();
+        }
+
+        function renderStories() {
+            const stories = currentFilter === 'saved'
+                ? allStories.filter(s => s.saved)
+                : allStories;
+
             if (!stories || stories.length === 0) {
-                contentEl.innerHTML = '<div class="empty-state">No stories found. Start processing your newsletters to see stories here.</div>';
+                const message = currentFilter === 'saved'
+                    ? 'No saved stories yet. Click the bookmark icon on a story to save it for later.'
+                    : 'No stories found. Start processing your newsletters to see stories here.';
+                contentEl.innerHTML = `<div class="empty-state">${message}</div>`;
                 return;
             }
 
@@ -259,6 +345,8 @@
                 const initials = getInitials(story.from_name, story.from_email);
                 const color = getColorForSender(story.from_email);
                 const displayName = story.from_name || story.from_email;
+                const savedClass = story.saved ? ' saved' : '';
+                const savedIcon = story.saved ? bookmarkFilled : bookmarkOutline;
 
                 return `
                     <!-- Story file: ${escapeHtml(story.filename || 'unknown')} -->
@@ -271,6 +359,13 @@
                                 <div class="story-from" title="${escapeHtml(story.from_email)}">${escapeHtml(displayName)}</div>
                                 <div class="story-date">${formatDate(story.date)}</div>
                             </div>
+                            <button class="save-btn${savedClass}"
+                                    data-filename="${escapeHtml(story.filename)}"
+                                    onclick="toggleSave(this)"
+                                    aria-label="${story.saved ? 'Unsave story' : 'Save story'}"
+                                    title="${story.saved ? 'Remove from saved' : 'Save for later'}">
+                                ${savedIcon}
+                            </button>
                             <h2 class="story-headline">
                                 <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
                                     ${escapeHtml(story.headline)}
@@ -285,10 +380,28 @@
             contentEl.innerHTML = storiesHTML;
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        async function toggleSave(btn) {
+            const filename = btn.dataset.filename;
+            const isSaved = btn.classList.contains('saved');
+            const method = isSaved ? 'DELETE' : 'POST';
+            const url = `/api/stories/${encodeURIComponent(filename)}/save`;
+
+            try {
+                const response = await fetch(url, { method });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Update the in-memory state
+                const story = allStories.find(s => s.filename === filename);
+                if (story) {
+                    story.saved = !isSaved;
+                }
+
+                renderStories();
+            } catch (error) {
+                console.error('Failed to toggle save:', error);
+            }
         }
 
         function showError(message) {
@@ -303,8 +416,8 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const stories = await response.json();
-                renderStories(stories);
+                allStories = await response.json();
+                renderStories();
             } catch (error) {
                 console.error('Failed to load stories:', error);
                 showError(error.message);
