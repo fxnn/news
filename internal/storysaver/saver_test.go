@@ -118,6 +118,31 @@ func TestSave_RejectsPathTraversal(t *testing.T) {
 	}
 }
 
+func TestSave_LeavesNoTempFiles(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	content := []byte(`{"headline":"Test"}`)
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Save(storydir, savedir, "story.json"); err != nil {
+		t.Fatalf("Save() unexpected error: %v", err)
+	}
+
+	entries, err := os.ReadDir(savedir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, entry := range entries {
+		if entry.Name() != "story.json" {
+			t.Errorf("unexpected file in savedir: %s", entry.Name())
+		}
+	}
+}
+
 func TestSave_CreatesSavedirIfNotExists(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := filepath.Join(t.TempDir(), "new-subdir")

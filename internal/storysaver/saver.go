@@ -53,9 +53,21 @@ func Save(storydir, savedir, filename string) error {
 		return fmt.Errorf("failed to read story file: %w", err)
 	}
 
-	tmpPath := destPath + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+	tmpFile, err := os.CreateTemp(savedir, ".save-*.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpPath)
 		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
 	if err := os.Rename(tmpPath, destPath); err != nil {
