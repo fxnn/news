@@ -78,7 +78,7 @@ WHAT TO EXTRACT:
 
 EXCLUSION RULES:
 - Exclude order links, shopping links, or any paid content
-- Exclude ALL sponsored content, advertisements, and promotions — even if not explicitly labeled. Look for markers like "sponsored", "ad", "partner", "promoted", "paid", "brought to you by", "in partnership with", "affiliate", or any content that promotes a product, service, or company rather than informing the reader
+- Exclude ALL sponsored content, advertisements, and promotions. Look for markers ANYWHERE in the headline or body: "sponsor", "(Sponsor)", "sponsored", "ad", "partner", "promoted", "paid", "brought to you by", "in partnership with", "affiliate". Also exclude any content that reads like marketing copy — promoting a product, service, report, or company rather than informing the reader
 - Exclude newsletter management links (subscribe, unsubscribe, preferences, manage subscription)
 - Exclude social media links (follow us, share, tweet)
 - Exclude footer/administrative links (privacy policy, terms of service, contact us)
