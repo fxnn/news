@@ -94,14 +94,7 @@ func NewStoryExtractorCmd(v *viper.Viper, runFn RunExtractorFunc) *cobra.Command
 	v.BindPFlag("log_bodies", f.Lookup("log-bodies"))
 	v.BindPFlag("log_stories", f.Lookup("log-stories"))
 
-	cmd.AddCommand(&cobra.Command{
-		Use:   "version",
-		Short: "Print build version information",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintln(cmd.OutOrStdout(), version.String())
-		},
-	})
+	cmd.AddCommand(version.NewCommand())
 
 	return cmd
 }
