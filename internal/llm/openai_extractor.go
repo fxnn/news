@@ -79,10 +79,8 @@ WHAT TO EXTRACT:
 EXCLUSION RULES:
 - Exclude order links, shopping links, or any paid content
 - Exclude ALL sponsored content, advertisements, and promotions. Look for markers ANYWHERE in the headline or body: "sponsor", "(Sponsor)", "sponsored", "ad", "partner", "promoted", "paid", "brought to you by", "in partnership with", "affiliate". Also exclude any content that reads like marketing copy — promoting a product, service, report, or company rather than informing the reader
-- Exclude newsletter management links (subscribe, unsubscribe, preferences, manage subscription)
+- Exclude anything about the newsletter service itself rather than actual news or content. This includes: subscription management, privacy policies, terms of service, cookie notices, data protection info (Datenschutzinformationen), objection to advertising (Widerspruch gegen Werbung), Impressum, unsubscribe links, contact/about pages of the newsletter, and any similar boilerplate
 - Exclude social media links (follow us, share, tweet)
-- Exclude footer/administrative links (privacy policy, terms of service, contact us)
-- Exclude links to the newsletter homepage or archive
 - Exclude footnote links, reference links, and citation links within story text
 - Exclude "read more", "learn more", or supplementary links that are part of an existing story
 - Only include actual news stories or articles with readable content
