@@ -244,6 +244,37 @@ func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
 	}
 }
 
+func TestHandleStories_FailsOnSavedirError(t *testing.T) {
+	storydir := t.TempDir()
+
+	testStories := []story.Story{
+		{
+			Headline:  "Test Story",
+			Teaser:    "Teaser",
+			URL:       "https://example.com/1",
+			FromEmail: "test@example.com",
+			FromName:  "Test",
+			Date:      time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+		},
+	}
+
+	messageID := "<test@example.com>"
+	date := time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)
+	if err := story.WriteStoriesToDir(storydir, messageID, date, testStories); err != nil {
+		t.Fatal(err)
+	}
+
+	// Pass a nonexistent savedir to trigger an error from ListSavedFilenames
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	w := httptest.NewRecorder()
+
+	handleStories(w, req, storydir, "/nonexistent/savedir")
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+}
+
 func TestHandleSaveStory_Success(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := t.TempDir()

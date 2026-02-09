@@ -130,7 +130,12 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir, savedir str
 
 	savedSet := map[string]bool{}
 	if savedir != "" {
-		savedSet, _ = storysaver.ListSavedFilenames(savedir)
+		var err error
+		savedSet, err = storysaver.ListSavedFilenames(savedir)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read saved stories: %v", err), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	response := make([]storyResponse, len(stories))
