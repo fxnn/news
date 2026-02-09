@@ -357,7 +357,8 @@
                                 <button class="save-btn${savedClass}"
                                         data-filename="${escapeHtml(story.filename)}"
                                         onclick="toggleSave(this)"
-                                        aria-label="${story.saved ? 'Unsave story' : 'Save story'}"
+                                        aria-label="Save story"
+                                        aria-pressed="${story.saved ? 'true' : 'false'}"
                                         title="${story.saved ? 'Remove from saved' : 'Save for later'}">
                                     ${savedIcon}
                                 </button>
