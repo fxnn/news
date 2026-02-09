@@ -144,3 +144,40 @@ func TestRead_IgnoresTmpDir(t *testing.T) {
 		t.Errorf("Read() returned %d paths, want 1 (tmp dir should be ignored)", len(paths))
 	}
 }
+
+func TestRead_ReturnsNewestFirst(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	curDir := filepath.Join(tmpDir, "cur")
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Maildir filenames start with Unix timestamps by convention
+	oldFile := filepath.Join(curDir, "1000000000.M100.host:2,S")
+	midFile := filepath.Join(curDir, "1500000000.M200.host:2,S")
+	newFile := filepath.Join(curDir, "2000000000.M300.host:2,S")
+
+	for _, f := range []string{oldFile, midFile, newFile} {
+		if err := os.WriteFile(f, []byte("email"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	paths, err := Read(tmpDir)
+	if err != nil {
+		t.Fatalf("Read() unexpected error: %v", err)
+	}
+
+	if len(paths) != 3 {
+		t.Fatalf("Read() returned %d paths, want 3", len(paths))
+	}
+
+	if filepath.Base(paths[0]) != "2000000000.M300.host:2,S" {
+		t.Errorf("paths[0] = %s, want newest file first", filepath.Base(paths[0]))
+	}
+	if filepath.Base(paths[2]) != "1000000000.M100.host:2,S" {
+		t.Errorf("paths[2] = %s, want oldest file last", filepath.Base(paths[2]))
+	}
+}
+

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -41,6 +42,12 @@ func Read(maildirPath string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read maildir: %w", err)
 	}
+
+	// Maildir filenames start with a Unix timestamp, so reverse-sorting
+	// by filename puts newest emails first.
+	sort.Slice(emails, func(i, j int) bool {
+		return filepath.Base(emails[i]) > filepath.Base(emails[j])
+	})
 
 	return emails, nil
 }
