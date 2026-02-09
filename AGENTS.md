@@ -60,3 +60,6 @@ We implement a newsletter reading app in Golang.
   (e.g., `APP_NAME_`) for environment variables to prevent collisions.
 - **TOML Syntax**: Ensure configuration files respect syntax rules (e.g., global
   keys must be defined *before* any table definitions).
+- **Error Handling**: Always handle error results from functions. Never discard
+  errors with `_`. If an error is not actionable, log it or return it to the
+  caller.
