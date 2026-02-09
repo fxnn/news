@@ -91,10 +91,12 @@ func TestHandleStories_EmptyDirectory(t *testing.T) {
 }
 
 func TestHandleStories_NonExistentDirectory(t *testing.T) {
+	nonexistentDir := filepath.Join(t.TempDir(), "does-not-exist")
+
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, "/nonexistent/directory", "")
+	handleStories(w, req, nonexistentDir, "")
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusInternalServerError {
@@ -102,7 +104,7 @@ func TestHandleStories_NonExistentDirectory(t *testing.T) {
 	}
 
 	body := w.Body.String()
-	if strings.Contains(body, "/nonexistent") {
+	if strings.Contains(body, nonexistentDir) {
 		t.Errorf("error response should not leak filesystem paths, got: %s", body)
 	}
 }
@@ -252,6 +254,7 @@ func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
 
 func TestHandleStories_NonExistentSavedirIsEmpty(t *testing.T) {
 	storydir := t.TempDir()
+	nonexistentSavedir := filepath.Join(t.TempDir(), "does-not-exist")
 
 	testStories := []story.Story{
 		{
@@ -273,7 +276,7 @@ func TestHandleStories_NonExistentSavedirIsEmpty(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, storydir, "/nonexistent/savedir")
+	handleStories(w, req, storydir, nonexistentSavedir)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Status = %d, want %d", w.Code, http.StatusOK)
