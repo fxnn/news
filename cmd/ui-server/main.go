@@ -58,16 +58,18 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 			addr := fmt.Sprintf(":%d", cfg.Port)
 			log.Info("Starting UI server", "addr", addr, "storydir", cfg.Storydir)
 
-			http.HandleFunc("/api/stories", func(w http.ResponseWriter, r *http.Request) {
+			mux := http.NewServeMux()
+
+			mux.HandleFunc("/api/stories", func(w http.ResponseWriter, r *http.Request) {
 				handleStories(w, r, cfg.Storydir)
 			})
 
-			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.Write(indexHTML)
 			})
 
-			if err := http.ListenAndServe(addr, nil); err != nil {
+			if err := http.ListenAndServe(addr, mux); err != nil {
 				return err
 			}
 
