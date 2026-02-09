@@ -127,10 +127,24 @@ func TestSave_RejectsPathTraversal(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := t.TempDir()
 
-	for _, filename := range []string{"../etc/passwd", "foo/bar.json", "..\\evil.json"} {
-		err := Save(storydir, savedir, filename)
+	testCases := []struct {
+		filename string
+		reason   string
+	}{
+		{"../etc/passwd", "parent directory traversal"},
+		{"foo/bar.json", "subdirectory path"},
+		{"..\\evil.json", "Windows parent traversal"},
+		{"/absolute/path.json", "absolute Unix path"},
+		{"C:\\absolute\\windows.json", "absolute Windows path"},
+		{"C:relative.json", "Windows volume-relative path"},
+		{"story.txt", "non-json extension"},
+		{"noextension", "missing extension"},
+	}
+
+	for _, tc := range testCases {
+		err := Save(storydir, savedir, tc.filename)
 		if err == nil {
-			t.Errorf("Save(%q) expected error for path traversal, got nil", filename)
+			t.Errorf("Save(%q) expected error for %s, got nil", tc.filename, tc.reason)
 		}
 	}
 }
@@ -206,10 +220,24 @@ func TestUnsave_FileNotFound(t *testing.T) {
 func TestUnsave_RejectsPathTraversal(t *testing.T) {
 	savedir := t.TempDir()
 
-	for _, filename := range []string{"../etc/passwd", "foo/bar.json", "..\\evil.json"} {
-		err := Unsave(savedir, filename)
+	testCases := []struct {
+		filename string
+		reason   string
+	}{
+		{"../etc/passwd", "parent directory traversal"},
+		{"foo/bar.json", "subdirectory path"},
+		{"..\\evil.json", "Windows parent traversal"},
+		{"/absolute/path.json", "absolute Unix path"},
+		{"C:\\absolute\\windows.json", "absolute Windows path"},
+		{"C:relative.json", "Windows volume-relative path"},
+		{"story.txt", "non-json extension"},
+		{"noextension", "missing extension"},
+	}
+
+	for _, tc := range testCases {
+		err := Unsave(savedir, tc.filename)
 		if err == nil {
-			t.Errorf("Unsave(%q) expected error for path traversal, got nil", filename)
+			t.Errorf("Unsave(%q) expected error for %s, got nil", tc.filename, tc.reason)
 		}
 	}
 }

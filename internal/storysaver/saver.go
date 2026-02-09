@@ -108,9 +108,30 @@ func Unsave(savedir, filename string) error {
 }
 
 func validateFilename(filename string) error {
-	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") ||
-		strings.Contains(filename, "..") || !strings.HasSuffix(filename, ".json") {
+	// Disallow directory traversal attempts in the name itself.
+	if strings.Contains(filename, "..") {
 		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
 	}
+
+	// Only allow simple base filenames (no path separators or extra components).
+	if filename != filepath.Base(filename) {
+		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
+	}
+
+	// Reject absolute paths on any OS.
+	if filepath.IsAbs(filename) {
+		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
+	}
+
+	// Reject Windows volume-relative or absolute paths like "C:evil.json" or "C:\evil.json".
+	if v := filepath.VolumeName(filename); v != "" {
+		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
+	}
+
+	// Require a .json extension.
+	if filepath.Ext(filename) != ".json" {
+		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
+	}
+
 	return nil
 }
