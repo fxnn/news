@@ -141,8 +141,8 @@ verbose = false
 
 [llm]
 provider = "openai"
-model = "gpt-4o-mini"
-api_key = "your-api-key"        # Optional, prefer env var
+model = "gpt-4.1-mini"    # reasoning models like gpt-5-mini are slower and more expensive
+api_key = "your-api-key"  # Optional, prefer env var
 base_url = "https://api.openai.com/v1"
 ```
  
