@@ -180,4 +180,3 @@ func TestRead_ReturnsNewestFirst(t *testing.T) {
 		t.Errorf("paths[2] = %s, want oldest file last", filepath.Base(paths[2]))
 	}
 }
-
