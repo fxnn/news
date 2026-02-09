@@ -311,9 +311,24 @@
         }
 
         function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            if (text === null || text === undefined) {
+                return '';
+            }
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function sanitizeUrl(url) {
+            if (!url) return '#';
+            const urlStr = String(url).trim();
+            if (urlStr.match(/^https?:\/\//i)) {
+                return urlStr;
+            }
+            return '#';
         }
 
         function setFilter(filter) {
@@ -394,7 +409,7 @@
                                 </button>
                             </div>
                             <h2 class="story-headline">
-                                <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
+                                <a href="${escapeHtml(sanitizeUrl(story.url))}" target="_blank" rel="noopener noreferrer">
                                     ${escapeHtml(story.headline)}
                                 </a>
                             </h2>
