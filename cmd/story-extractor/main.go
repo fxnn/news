@@ -8,6 +8,7 @@ import (
 	"github.com/fxnn/news/internal/extractor"
 	"github.com/fxnn/news/internal/llm"
 	"github.com/fxnn/news/internal/logger"
+	"github.com/fxnn/news/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -92,6 +93,14 @@ func NewStoryExtractorCmd(v *viper.Viper, runFn RunExtractorFunc) *cobra.Command
 	v.BindPFlag("log_headers", f.Lookup("log-headers"))
 	v.BindPFlag("log_bodies", f.Lookup("log-bodies"))
 	v.BindPFlag("log_stories", f.Lookup("log-stories"))
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print build version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), version.String())
+		},
+	})
 
 	return cmd
 }

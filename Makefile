@@ -1,5 +1,10 @@
 .PHONY: all build story-extractor ui-server test cover fmt vet clean help
 
+VERSION_PKG := github.com/fxnn/news/internal/version
+BUILD_TIMESTAMP := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+LDFLAGS := -X $(VERSION_PKG).BuildTimestamp=$(BUILD_TIMESTAMP) -X $(VERSION_PKG).BuildBranch=$(BUILD_BRANCH)
+
 all: fmt vet test build ## Format, vet, test, and build everything
 
 help: ## Show this help
@@ -8,10 +13,10 @@ help: ## Show this help
 build: story-extractor ui-server ## Build both binaries
 
 story-extractor: ## Build story-extractor
-	go build -o story-extractor ./cmd/story-extractor
+	go build -ldflags "$(LDFLAGS)" -o story-extractor ./cmd/story-extractor
 
 ui-server: ## Build ui-server
-	go build -o ui-server ./cmd/ui-server
+	go build -ldflags "$(LDFLAGS)" -o ui-server ./cmd/ui-server
 
 test: ## Run all tests
 	go test ./...

@@ -1,15 +1,41 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/fxnn/news/internal/config"
+	"github.com/fxnn/news/internal/version"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestServerCmd_Version(t *testing.T) {
+	version.BuildTimestamp = "2025-01-15T10:30:00Z"
+	version.BuildBranch = "feature/test"
+	t.Cleanup(func() {
+		version.BuildTimestamp = ""
+		version.BuildBranch = ""
+	})
+
+	v := viper.New()
+	config.SetupUiServer(v)
+	cmd := NewUiServerCmd(v, nil)
+
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetArgs([]string{"version"})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	output := buf.String()
+	assert.Contains(t, output, "2025-01-15T10:30:00Z")
+	assert.Contains(t, output, "feature/test")
+}
 
 func TestServerCmd_RequiredInput(t *testing.T) {
 	v := viper.New()
