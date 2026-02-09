@@ -39,8 +39,8 @@ type LLMResponse struct {
 func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error) {
 	prompt := buildPrompt(emailData.Subject, emailData.Body)
 
-	// Create context with 60 second timeout to prevent indefinite hangs
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	// Reasoning models (gpt-5, o-series) need more time due to their thinking step
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	resp, err := e.client.CreateChatCompletion(
