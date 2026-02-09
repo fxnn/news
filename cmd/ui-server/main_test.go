@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -98,6 +99,11 @@ func TestHandleStories_NonExistentDirectory(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusInternalServerError)
+	}
+
+	body := w.Body.String()
+	if strings.Contains(body, "/nonexistent") {
+		t.Errorf("error response should not leak filesystem paths, got: %s", body)
 	}
 }
 

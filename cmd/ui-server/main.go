@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -61,6 +62,7 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 			}
 
 			log := logger.New(cfg.Verbose)
+			slog.SetDefault(log)
 			addr := fmt.Sprintf(":%d", cfg.Port)
 			log.Info("Starting UI server", "addr", addr, "storydir", cfg.Storydir)
 
@@ -123,7 +125,8 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir, savedir str
 
 	stories, err := storyreader.ReadStories(storydir)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to read stories: %v", err), http.StatusInternalServerError)
+		slog.Error("failed to read stories", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -132,7 +135,8 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir, savedir str
 		var err error
 		savedSet, err = storysaver.ListSavedFilenames(savedir)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to read saved stories: %v", err), http.StatusInternalServerError)
+			slog.Error("failed to read saved stories", "error", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -170,7 +174,8 @@ func handleSaveStory(w http.ResponseWriter, r *http.Request, storydir, savedir s
 		return
 	}
 
-	http.Error(w, fmt.Sprintf("Failed to save story: %v", err), http.StatusInternalServerError)
+	slog.Error("failed to save story", "error", err, "filename", filename)
+	http.Error(w, "internal server error", http.StatusInternalServerError)
 }
 
 func handleUnsaveStory(w http.ResponseWriter, r *http.Request, savedir string) {
@@ -192,5 +197,6 @@ func handleUnsaveStory(w http.ResponseWriter, r *http.Request, savedir string) {
 		return
 	}
 
-	http.Error(w, fmt.Sprintf("Failed to unsave story: %v", err), http.StatusInternalServerError)
+	slog.Error("failed to unsave story", "error", err, "filename", filename)
+	http.Error(w, "internal server error", http.StatusInternalServerError)
 }
