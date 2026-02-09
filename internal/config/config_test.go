@@ -31,9 +31,9 @@ func TestLoadStoryExtractor_Defaults(t *testing.T) {
 
 func TestLoadStoryExtractor_ConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configContent := `
-maildir = "/tmp/mail"
-storydir = "/tmp/stories"
+	maildir := filepath.Join(tmpDir, "mail")
+	storydir := filepath.Join(tmpDir, "stories")
+	configContent := "maildir = " + quote(maildir) + "\nstorydir = " + quote(storydir) + `
 verbose = true
 
 [llm]
@@ -101,4 +101,48 @@ func TestLoadUiServer_EnvVars(t *testing.T) {
 	if cfg.Verbose != true {
 		t.Errorf("Verbose = %v, want true", cfg.Verbose)
 	}
+}
+
+func TestLoadUiServer_SavedirFromEnvVar(t *testing.T) {
+	savedir := filepath.Join(t.TempDir(), "saved-stories")
+	t.Setenv("UI_SERVER_SAVEDIR", savedir)
+
+	v := viper.New()
+	SetupUiServer(v)
+	cfg, err := LoadUiServer(v, "")
+	if err != nil {
+		t.Fatalf("LoadUiServer() error = %v", err)
+	}
+
+	if cfg.Savedir != savedir {
+		t.Errorf("Savedir = %v, want %v", cfg.Savedir, savedir)
+	}
+}
+
+func TestLoadUiServer_SavedirFromConfigFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	storydir := filepath.Join(tmpDir, "stories")
+	savedir := filepath.Join(tmpDir, "saved")
+	configContent := "storydir = " + quote(storydir) + "\nsavedir = " + quote(savedir) + "\nport = 8080\n"
+	configPath := filepath.Join(tmpDir, "ui-server.toml")
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	v := viper.New()
+	SetupUiServer(v)
+	cfg, err := LoadUiServer(v, configPath)
+	if err != nil {
+		t.Fatalf("LoadUiServer() error = %v", err)
+	}
+
+	if cfg.Savedir != savedir {
+		t.Errorf("Savedir = %v, want %v", cfg.Savedir, savedir)
+	}
+}
+
+// quote wraps a path in single quotes for TOML values (TOML literal strings),
+// so that backslashes in Windows paths are not treated as escapes.
+func quote(s string) string {
+	return "'" + s + "'"
 }

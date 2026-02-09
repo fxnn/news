@@ -224,25 +224,26 @@ make ui-server
 ```
 
 #### Usage
- 
+
  ```bash
- ./ui-server --storydir ~/stories
+ ./ui-server --storydir ~/stories --savedir ~/saved-stories
  ```
- 
+
  Or specify a custom port:
  ```bash
- ./ui-server --storydir ~/stories --port 3000
+ ./ui-server --storydir ~/stories --savedir ~/saved-stories --port 3000
  ```
- 
+
  **Environment Variables:**
  *   **Prefix**: `UI_SERVER_`
- *   Examples: `UI_SERVER_PORT=3000`, `UI_SERVER_STORYDIR=~/stories`
+ *   Examples: `UI_SERVER_PORT=3000`, `UI_SERVER_STORYDIR=~/stories`, `UI_SERVER_SAVEDIR=~/saved-stories`
  *   **Config File**: `ui-server.toml` (defaults: `.`, `$HOME`)
- 
+
 #### CLI Flags
 
 Required:
 - `--storydir`: Path to the directory containing story JSON files
+- `--savedir`: Path to the directory for saved stories
 
 Optional:
 - `--port`: Port to listen on (default: 8080)
@@ -260,6 +261,8 @@ The UI displays:
 - Brief teaser text
 - Source newsletter (sender name/email)
 - Publication date (shown as relative time: "Today", "2 days ago", etc.)
+- Bookmark icon to save stories for later
+- Filter tabs to switch between All and Saved stories
 
 ## Quick Start
 
@@ -278,7 +281,7 @@ make story-extractor
 
 # 3. Start the UI server
 make ui-server
-./ui-server --storydir ~/stories
+./ui-server --storydir ~/stories --savedir ~/saved-stories
 
 # 4. Open in browser
 open http://localhost:8080

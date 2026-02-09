@@ -49,7 +49,7 @@ func TestServerCmd_VersionRejectsArgs(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown command")
 }
 
-func TestServerCmd_RequiredInput(t *testing.T) {
+func TestServerCmd_RequiredStorydir(t *testing.T) {
 	v := viper.New()
 	config.SetupUiServer(v)
 
@@ -57,11 +57,24 @@ func TestServerCmd_RequiredInput(t *testing.T) {
 		return nil
 	})
 
-	// Missing storydir
 	cmd.SetArgs([]string{})
 	err := cmd.Execute()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "storydir is required")
+}
+
+func TestServerCmd_RequiredSavedir(t *testing.T) {
+	v := viper.New()
+	config.SetupUiServer(v)
+
+	cmd := NewUiServerCmd(v, func(cfg *config.UiServer) error {
+		return nil
+	})
+
+	cmd.SetArgs([]string{"--storydir", "/tmp/stories"})
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "savedir is required")
 }
 
 func TestServerCmd_Configuration(t *testing.T) {
@@ -70,6 +83,7 @@ func TestServerCmd_Configuration(t *testing.T) {
 	configFile := filepath.Join(tmpDir, "ui-server.toml")
 	err := os.WriteFile(configFile, []byte(`
 storydir = "/file/stories"
+savedir = "/file/saved"
 port = 9090
 verbose = true
 `), 0644)
@@ -95,6 +109,7 @@ verbose = true
 	require.NoError(t, err)
 
 	assert.Equal(t, "/file/stories", capturedCfg.Storydir)
+	assert.Equal(t, "/file/saved", capturedCfg.Savedir)
 	assert.Equal(t, 9999, capturedCfg.Port) // Env overrides file
 	assert.False(t, capturedCfg.Verbose)    // Flag overrides file
 }
