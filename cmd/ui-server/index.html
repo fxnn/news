@@ -227,10 +227,10 @@
         <header>
             <h1>News Stories</h1>
             <div class="subtitle">Stories extracted from your newsletters</div>
-            <nav class="filter-tabs">
-                <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
-                <button class="filter-tab" data-filter="saved" onclick="setFilter('saved')">Saved</button>
-            </nav>
+            <div class="filter-tabs" role="tablist" aria-label="Story filters">
+                <button class="filter-tab active" role="tab" aria-selected="true" data-filter="all" onclick="setFilter('all')">All</button>
+                <button class="filter-tab" role="tab" aria-selected="false" data-filter="saved" onclick="setFilter('saved')">Saved</button>
+            </div>
         </header>
 
         <div id="content">
@@ -319,7 +319,9 @@
         function setFilter(filter) {
             currentFilter = filter;
             document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.filter === filter);
+                const isActive = tab.dataset.filter === filter;
+                tab.classList.toggle('active', isActive);
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
             renderStories();
         }
