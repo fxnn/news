@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -42,7 +44,7 @@ func TestHandleStories_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, tmpDir)
+	handleStories(w, req, tmpDir, "")
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
@@ -70,7 +72,7 @@ func TestHandleStories_EmptyDirectory(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, tmpDir)
+	handleStories(w, req, tmpDir, "")
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
@@ -91,7 +93,7 @@ func TestHandleStories_NonExistentDirectory(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, "/nonexistent/directory")
+	handleStories(w, req, "/nonexistent/directory", "")
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusInternalServerError {
@@ -108,7 +110,7 @@ func TestHandleStories_MethodNotAllowed(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/stories", nil)
 			w := httptest.NewRecorder()
 
-			handleStories(w, req, tmpDir)
+			handleStories(w, req, tmpDir, "")
 
 			resp := w.Result()
 			if resp.StatusCode != http.StatusMethodNotAllowed {
@@ -157,7 +159,7 @@ func TestHandleStories_SortedByDate(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
 	w := httptest.NewRecorder()
 
-	handleStories(w, req, tmpDir)
+	handleStories(w, req, tmpDir, "")
 
 	var stories []story.Story
 	if err := json.NewDecoder(w.Body).Decode(&stories); err != nil {
@@ -175,5 +177,69 @@ func TestHandleStories_SortedByDate(t *testing.T) {
 
 	if stories[1].Headline != "Older Story" {
 		t.Errorf("Second story headline = %q, want %q", stories[1].Headline, "Older Story")
+	}
+}
+
+func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
+	storydir := t.TempDir()
+	savedir := t.TempDir()
+
+	testStories := []story.Story{
+		{
+			Headline:  "Saved Story",
+			Teaser:    "Teaser 1",
+			URL:       "https://example.com/1",
+			FromEmail: "test@example.com",
+			FromName:  "Test",
+			Date:      time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+		},
+		{
+			Headline:  "Unsaved Story",
+			Teaser:    "Teaser 2",
+			URL:       "https://example.com/2",
+			FromEmail: "test@example.com",
+			FromName:  "Test",
+			Date:      time.Date(2006, 1, 3, 15, 4, 5, 0, time.UTC),
+		},
+	}
+
+	messageID := "<test@example.com>"
+	date := time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)
+	if err := story.WriteStoriesToDir(storydir, messageID, date, testStories); err != nil {
+		t.Fatal(err)
+	}
+
+	// Copy only the first story to savedir to mark it as saved
+	firstStoryFilename := "2006-01-02_test@example.com_1.json"
+	data, err := os.ReadFile(filepath.Join(storydir, firstStoryFilename))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(savedir, firstStoryFilename), data, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	w := httptest.NewRecorder()
+
+	handleStories(w, req, storydir, savedir)
+
+	var stories []storyResponse
+	if err := json.NewDecoder(w.Body).Decode(&stories); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	if len(stories) != 2 {
+		t.Fatalf("Got %d stories, want 2", len(stories))
+	}
+
+	// Find each story and check saved status
+	for _, s := range stories {
+		if s.Headline == "Saved Story" && !s.Saved {
+			t.Error("Saved Story should have saved=true")
+		}
+		if s.Headline == "Unsaved Story" && s.Saved {
+			t.Error("Unsaved Story should have saved=false")
+		}
 	}
 }

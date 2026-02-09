@@ -11,6 +11,7 @@ import (
 	"github.com/fxnn/news/internal/logger"
 	"github.com/fxnn/news/internal/story"
 	"github.com/fxnn/news/internal/storyreader"
+	"github.com/fxnn/news/internal/storysaver"
 	"github.com/fxnn/news/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -65,7 +66,7 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 			mux := http.NewServeMux()
 
 			mux.HandleFunc("/api/stories", func(w http.ResponseWriter, r *http.Request) {
-				handleStories(w, r, cfg.Storydir)
+				handleStories(w, r, cfg.Storydir, cfg.Savedir)
 			})
 
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +99,14 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	return cmd
 }
 
-func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
+// storyResponse wraps a story with its saved status for the API response.
+// Keeps the save concern in the UI layer, separate from the shared Story model.
+type storyResponse struct {
+	story.Story
+	Saved bool `json:"saved"`
+}
+
+func handleStories(w http.ResponseWriter, r *http.Request, storydir, savedir string) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -110,13 +118,16 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir string) {
 		return
 	}
 
-	// storyreader.ReadStories returns nil if no stories are found.
-	// We explicitly initialize an empty slice to ensure the API returns "[]" (empty JSON array)
-	// instead of "null", which simplifies client-side handling.
-	if stories == nil {
-		stories = []story.Story{}
+	savedSet := map[string]bool{}
+	if savedir != "" {
+		savedSet, _ = storysaver.ListSavedFilenames(savedir)
+	}
+
+	response := make([]storyResponse, len(stories))
+	for i, s := range stories {
+		response[i] = storyResponse{Story: s, Saved: savedSet[s.Filename]}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stories)
+	json.NewEncoder(w).Encode(response)
 }
