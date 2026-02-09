@@ -14,12 +14,13 @@ import (
 )
 
 func TestServerCmd_Version(t *testing.T) {
+	prevTimestamp, prevBranch := version.BuildTimestamp, version.BuildBranch
+	t.Cleanup(func() {
+		version.BuildTimestamp = prevTimestamp
+		version.BuildBranch = prevBranch
+	})
 	version.BuildTimestamp = "2025-01-15T10:30:00Z"
 	version.BuildBranch = "feature/test"
-	t.Cleanup(func() {
-		version.BuildTimestamp = ""
-		version.BuildBranch = ""
-	})
 
 	v := viper.New()
 	config.SetupUiServer(v)
