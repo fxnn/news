@@ -14,12 +14,13 @@ import (
 )
 
 func TestExtractorCmd_Version(t *testing.T) {
+	prevTimestamp, prevBranch := version.BuildTimestamp, version.BuildBranch
+	t.Cleanup(func() {
+		version.BuildTimestamp = prevTimestamp
+		version.BuildBranch = prevBranch
+	})
 	version.BuildTimestamp = "2025-01-15T10:30:00Z"
 	version.BuildBranch = "main"
-	t.Cleanup(func() {
-		version.BuildTimestamp = ""
-		version.BuildBranch = ""
-	})
 
 	v := viper.New()
 	config.SetupStoryExtractor(v)
