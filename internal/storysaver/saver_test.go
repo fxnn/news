@@ -60,6 +60,19 @@ func TestListSavedFilenames_NonExistentDir(t *testing.T) {
 	}
 }
 
+func TestListSavedFilenames_SavedirIsFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	notADir := filepath.Join(tmpDir, "file.txt")
+	if err := os.WriteFile(notADir, []byte("not a directory"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := ListSavedFilenames(notADir)
+	if err == nil {
+		t.Error("ListSavedFilenames() expected error when savedir is a file, got nil")
+	}
+}
+
 func TestSave_CopiesFile(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := t.TempDir()
