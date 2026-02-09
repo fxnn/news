@@ -11,8 +11,10 @@ import (
 // ListSavedFilenames returns a set of JSON filenames present in the savedir.
 // Used to determine which stories have been saved for later.
 func ListSavedFilenames(savedir string) (map[string]bool, error) {
-	if _, err := os.Stat(savedir); os.IsNotExist(err) {
+	if _, err := os.Stat(savedir); errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("directory does not exist: %s", savedir)
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to access savedir: %w", err)
 	}
 
 	pattern := filepath.Join(savedir, "*.json")
@@ -45,6 +47,8 @@ func Save(storydir, savedir, filename string) error {
 	destPath := filepath.Join(savedir, filename)
 	if _, err := os.Stat(destPath); err == nil {
 		return ErrAlreadySaved
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to check destination: %w", err)
 	}
 
 	srcPath := filepath.Join(storydir, filename)
