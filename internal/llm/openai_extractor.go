@@ -49,7 +49,7 @@ Return a JSON object with this exact structure:
   "stories": [
     {
       "headline": "Story headline",
-      "teaser": "Brief teaser text (1-2 sentences)",
+      "teaser": "Content type prefix followed by summary (2-4 sentences)",
       "url": "https://example.com/article"
     }
   ]
@@ -64,7 +64,9 @@ CRITICAL INSTRUCTIONS:
 FORMATTING RULES:
 - Write the headline and teaser in the same language as the original email
 - Keep headlines SHORT: maximum 5-8 words
-- In the teaser, clarify the kind of content (blog post, news article, GitHub repo, podcast episode, video, research paper, etc.)
+- Always start the teaser with a one-word content type followed by a period, e.g. "Article.", "Blog post.", "Podcast.", "Video.", "LinkedIn Post.", "GitHub Repo.", "Research Paper.", "News.", "Tutorial.", "Talk.", "Tool."
+- Write teasers of 2-4 sentences. Prefer longer, more informative summaries over short ones.
+- If the newsletter already contains a summary paragraph describing the linked content, reuse that summary word-for-word after the content type prefix
 - Each story MUST have a unique URL link to the actual article
 - If there is only one URL in the email, create only one story
 - Separate stories should have separate URLs - do not create multiple stories for a single URL
