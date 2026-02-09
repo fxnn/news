@@ -196,9 +196,9 @@
         }
 
         function getColorForSender(name, email) {
-            // Use name for color generation if available, otherwise fall back to email
-            // This ensures newsletters from the same email but different names get different colors
-            const colorSource = (name && name !== email) ? name : email;
+            // Use both name and email concatenated for color generation
+            // This ensures unique colors even when newsletters share the same email
+            const colorSource = (name && name !== email) ? name + email : email;
             const hash = hashCode(colorSource);
 
             // Use golden ratio to get better distribution across hue spectrum
