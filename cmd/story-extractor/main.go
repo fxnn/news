@@ -97,6 +97,7 @@ func NewStoryExtractorCmd(v *viper.Viper, runFn RunExtractorFunc) *cobra.Command
 	cmd.AddCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print build version information",
+		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(cmd.OutOrStdout(), version.String())
 		},
