@@ -37,7 +37,15 @@ type LLMResponse struct {
 }
 
 func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error) {
-	prompt := fmt.Sprintf(`Your task is to extract ALL news stories from this newsletter email. Read through the ENTIRE email body carefully and extract EVERY story that has a URL.
+	prompt := fmt.Sprintf(`Your task is to extract news stories from an email. But first, decide whether this email is a CONTENT NEWSLETTER or not.
+
+A content newsletter curates links to external articles, blog posts, podcasts, videos, repos, etc. — it points readers to content hosted elsewhere.
+
+These are NOT content newsletters — return {"stories": []} for them:
+- Marketing emails from brands (e.g. adidas, Amazon, Nike) promoting their own products or services
+- Transactional emails (order confirmations, shipping updates, account notifications)
+- Promotional emails with shopping links, discount codes, or product showcases
+- Emails where all links point back to the sender's own website/shop/app
 
 Subject: %s
 
@@ -56,7 +64,8 @@ Return a JSON object with this exact structure:
 }
 
 CRITICAL INSTRUCTIONS:
-- Extract ALL stories from the email body - not just the ones mentioned in the subject line
+- First decide: is this a content newsletter? If not, return {"stories": []}
+- If it IS a content newsletter, extract ALL stories — not just the ones mentioned in the subject line
 - Read through the ENTIRE email systematically from top to bottom
 - Each story with a unique URL should be included
 - Do NOT limit yourself to only a few stories - extract as many as exist
