@@ -147,7 +147,9 @@ func handleStories(w http.ResponseWriter, r *http.Request, storydir, savedir str
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		slog.Error("failed to encode stories response", "error", err)
+	}
 }
 
 func handleSaveStory(w http.ResponseWriter, r *http.Request, storydir, savedir string) {
