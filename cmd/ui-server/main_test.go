@@ -358,6 +358,11 @@ func TestHandleSaveStory_PathTraversal(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
+
+	body := w.Body.String()
+	if strings.Contains(body, "../evil.json") {
+		t.Errorf("error response should not leak filename, got: %s", body)
+	}
 }
 
 func TestHandleUnsaveStory_Success(t *testing.T) {
@@ -407,5 +412,10 @@ func TestHandleUnsaveStory_PathTraversal(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+
+	body := w.Body.String()
+	if strings.Contains(body, "../evil.json") {
+		t.Errorf("error response should not leak filename, got: %s", body)
 	}
 }

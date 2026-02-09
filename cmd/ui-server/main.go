@@ -172,7 +172,8 @@ func handleSaveStory(w http.ResponseWriter, r *http.Request, storydir, savedir s
 	}
 
 	if errors.Is(err, storysaver.ErrInvalidFilename) {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		slog.Warn("invalid filename in save request", "filename", filename, "error", err)
+		http.Error(w, "invalid filename", http.StatusBadRequest)
 		return
 	}
 
@@ -195,7 +196,8 @@ func handleUnsaveStory(w http.ResponseWriter, r *http.Request, savedir string) {
 	}
 
 	if errors.Is(err, storysaver.ErrInvalidFilename) {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		slog.Warn("invalid filename in unsave request", "filename", filename, "error", err)
+		http.Error(w, "invalid filename", http.StatusBadRequest)
 		return
 	}
 
