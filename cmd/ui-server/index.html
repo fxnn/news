@@ -115,7 +115,6 @@
         .story-content {
             flex: 1;
             min-width: 0;
-            position: relative;
         }
 
         .story-header {
@@ -142,7 +141,6 @@
         .story-headline {
             font-size: 1.4em;
             margin-bottom: 10px;
-            padding-right: 36px;
         }
 
         .story-headline a {
@@ -160,9 +158,7 @@
         }
 
         .save-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
+            flex-shrink: 0;
             background: none;
             border: none;
             cursor: pointer;
@@ -358,14 +354,14 @@
                             <div class="story-header">
                                 <div class="story-from" title="${escapeHtml(story.from_email)}">${escapeHtml(displayName)}</div>
                                 <div class="story-date">${formatDate(story.date)}</div>
+                                <button class="save-btn${savedClass}"
+                                        data-filename="${escapeHtml(story.filename)}"
+                                        onclick="toggleSave(this)"
+                                        aria-label="${story.saved ? 'Unsave story' : 'Save story'}"
+                                        title="${story.saved ? 'Remove from saved' : 'Save for later'}">
+                                    ${savedIcon}
+                                </button>
                             </div>
-                            <button class="save-btn${savedClass}"
-                                    data-filename="${escapeHtml(story.filename)}"
-                                    onclick="toggleSave(this)"
-                                    aria-label="${story.saved ? 'Unsave story' : 'Save story'}"
-                                    title="${story.saved ? 'Remove from saved' : 'Save for later'}">
-                                ${savedIcon}
-                            </button>
                             <h2 class="story-headline">
                                 <a href="${escapeHtml(story.url)}" target="_blank" rel="noopener noreferrer">
                                     ${escapeHtml(story.headline)}
