@@ -37,6 +37,17 @@ func TestServerCmd_Version(t *testing.T) {
 	assert.Contains(t, output, "feature/test")
 }
 
+func TestServerCmd_VersionRejectsArgs(t *testing.T) {
+	v := viper.New()
+	config.SetupUiServer(v)
+	cmd := NewUiServerCmd(v, nil)
+	cmd.SetArgs([]string{"version", "foo"})
+
+	err := cmd.Execute()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown command")
+}
+
 func TestServerCmd_RequiredInput(t *testing.T) {
 	v := viper.New()
 	config.SetupUiServer(v)

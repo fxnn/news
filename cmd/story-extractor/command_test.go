@@ -37,6 +37,17 @@ func TestExtractorCmd_Version(t *testing.T) {
 	assert.Contains(t, output, "main")
 }
 
+func TestExtractorCmd_VersionRejectsArgs(t *testing.T) {
+	v := viper.New()
+	config.SetupStoryExtractor(v)
+	cmd := NewStoryExtractorCmd(v, nil)
+	cmd.SetArgs([]string{"version", "foo"})
+
+	err := cmd.Execute()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown command")
+}
+
 func TestExtractorCmd_RequiredFlags(t *testing.T) {
 	// Test missing maildir
 	v := viper.New()

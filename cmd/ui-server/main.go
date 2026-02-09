@@ -88,6 +88,7 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print build version information",
+		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(cmd.OutOrStdout(), version.String())
 		},
