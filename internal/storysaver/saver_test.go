@@ -50,7 +50,8 @@ func TestListSavedFilenames_WithFiles(t *testing.T) {
 }
 
 func TestListSavedFilenames_NonExistentDir(t *testing.T) {
-	filenames, err := ListSavedFilenames("/nonexistent/directory")
+	nonexistentDir := filepath.Join(t.TempDir(), "does-not-exist")
+	filenames, err := ListSavedFilenames(nonexistentDir)
 	if err != nil {
 		t.Fatalf("ListSavedFilenames() unexpected error: %v", err)
 	}
