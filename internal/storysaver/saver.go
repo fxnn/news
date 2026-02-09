@@ -32,6 +32,7 @@ func ListSavedFilenames(savedir string) (map[string]bool, error) {
 }
 
 var ErrAlreadySaved = errors.New("story is already saved")
+var ErrInvalidFilename = errors.New("invalid filename")
 
 // Save copies a story JSON file from storydir to savedir.
 // Creates savedir if it does not exist. Uses atomic writes to prevent partial copies.
@@ -99,7 +100,7 @@ func Unsave(savedir, filename string) error {
 func validateFilename(filename string) error {
 	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") ||
 		strings.Contains(filename, "..") || !strings.HasSuffix(filename, ".json") {
-		return fmt.Errorf("invalid filename: %s", filename)
+		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
 	}
 	return nil
 }

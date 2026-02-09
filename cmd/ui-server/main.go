@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/logger"
@@ -166,8 +165,7 @@ func handleSaveStory(w http.ResponseWriter, r *http.Request, storydir, savedir s
 		return
 	}
 
-	// Filename validation errors from storysaver
-	if isValidationError(err) {
+	if errors.Is(err, storysaver.ErrInvalidFilename) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -189,14 +187,10 @@ func handleUnsaveStory(w http.ResponseWriter, r *http.Request, savedir string) {
 		return
 	}
 
-	if isValidationError(err) {
+	if errors.Is(err, storysaver.ErrInvalidFilename) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	http.Error(w, fmt.Sprintf("Failed to unsave story: %v", err), http.StatusInternalServerError)
-}
-
-func isValidationError(err error) bool {
-	return err != nil && strings.HasPrefix(err.Error(), "invalid filename")
 }
