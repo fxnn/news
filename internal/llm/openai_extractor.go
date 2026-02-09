@@ -80,6 +80,7 @@ EXCLUSION RULES (apply these BEFORE adding any story):
 - NEVER extract newsletter boilerplate. If a story is about the newsletter itself rather than external content, EXCLUDE it. Examples: "Werbung abbestellen", "Datenschutzinformationen", "Datenschutz", "Impressum", "Abmelden", "Unsubscribe", "Manage preferences", "Terms of Service", "Privacy Policy", "Cookie Policy". This applies in ALL languages.
 - Exclude order links, shopping links, or any paid content
 - Exclude sponsored content, advertisements, and promotions. A story is sponsored when it is LABELED as such by the newsletter — look for markers like "(Sponsor)", "Sponsored", "Ad", "Partner Post", "Promoted", "Brought to you by", "In partnership with" used as labels near the headline or as section headers. Do NOT exclude articles that merely discuss topics like advertising, partnerships, or affiliate programs as editorial content
+- Exclude giveaways, sweepstakes, contests, and raffles (Gewinnspiel, Verlosung, etc.) — these are promotions, not news
 - Exclude social media links (follow us, share, tweet)
 - Exclude footnote links, reference links, and citation links within story text
 - Exclude "read more", "learn more", or supplementary links that are part of an existing story
