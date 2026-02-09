@@ -2,7 +2,7 @@
 
 VERSION_PKG := github.com/fxnn/news/internal/version
 BUILD_TIMESTAMP := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null | grep -v '^HEAD$$' || echo unknown)
 LDFLAGS := -X $(VERSION_PKG).BuildTimestamp=$(BUILD_TIMESTAMP) -X $(VERSION_PKG).BuildBranch=$(BUILD_BRANCH)
 
 all: fmt vet test build ## Format, vet, test, and build everything
