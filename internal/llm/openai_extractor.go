@@ -65,8 +65,8 @@ FORMATTING RULES:
 - Write the headline and teaser in the same language as the original email
 - Keep headlines SHORT: maximum 5-8 words
 - Always start the teaser with a short content type label (1-2 words) followed by a period, e.g. "Article.", "Blog post.", "Podcast.", "Video.", "LinkedIn Post.", "GitHub Repo.", "Research Paper.", "News.", "Tutorial.", "Talk.", "Tool."
-- Write teasers of 2-4 sentences. Prefer longer, more informative summaries over short ones.
-- If the newsletter already contains a summary paragraph describing the linked content, reuse that summary word-for-word after the content type prefix
+- If the newsletter already contains a summary paragraph describing the linked content, reuse that summary word-for-word after the content type prefix, regardless of length
+- Otherwise, write teasers of 2-4 sentences. Prefer longer, more informative summaries over short ones.
 - Each story MUST have a unique URL link to the actual article
 - If there is only one URL in the email, create only one story
 - Separate stories should have separate URLs - do not create multiple stories for a single URL
