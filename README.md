@@ -166,7 +166,7 @@ export STORY_EXTRACTOR_LLM_API_KEY="your-api-key-here"
 #### Build
 
 ```bash
-go build ./cmd/story-extractor
+make story-extractor
 ```
 
 #### Usage
@@ -220,7 +220,7 @@ The UI server provides a web interface to browse and read extracted stories.
 #### Build
 
 ```bash
-go build ./cmd/ui-server
+make ui-server
 ```
 
 #### Usage
@@ -269,15 +269,15 @@ Complete workflow from setup to reading stories:
 # 1. Download newsletters using mbsync
 mbsync -a
 
-# 2. Extract stories from newsletters
-go build ./cmd/story-extractor
+# 2. Build and extract stories from newsletters
+make story-extractor
 ./story-extractor \
   --maildir ~/Maildir/newsletters \
   --storydir ~/stories \
   --config story-extractor.toml
 
 # 3. Start the UI server
-go build ./cmd/ui-server
+make ui-server
 ./ui-server --storydir ~/stories
 
 # 4. Open in browser
@@ -317,6 +317,8 @@ Set up a cron job to run daily:
 ## Development
 
 This project is written in Go and every single line of code has been created with AI assistance.
+
+Run `make help` for available targets. `make` on its own formats, vets, tests, and builds everything.
 
 ## License
 
