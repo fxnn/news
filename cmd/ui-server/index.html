@@ -195,8 +195,11 @@
             return Math.abs(hash);
         }
 
-        function getColorForSender(email) {
-            const hash = hashCode(email);
+        function getColorForSender(name, email) {
+            // Use both name and email concatenated for color generation
+            // This ensures unique colors even when newsletters share the same email
+            const colorSource = (name && name !== email) ? name + email : email;
+            const hash = hashCode(colorSource);
 
             // Use golden ratio to get better distribution across hue spectrum
             const goldenRatio = 0.618033988749895;
@@ -257,7 +260,7 @@
 
             const storiesHTML = stories.map(story => {
                 const initials = getInitials(story.from_name, story.from_email);
-                const color = getColorForSender(story.from_email);
+                const color = getColorForSender(story.from_name, story.from_email);
                 const displayName = story.from_name || story.from_email;
 
                 return `
