@@ -32,6 +32,7 @@ jobs:
       - name: Build binaries
         env:
           VERSION_PKG: github.com/fxnn/news/internal/version
+          VERSION: ${{ steps.version.outputs.tag }}
           BUILD_TIMESTAMP: ${{ steps.version.outputs.build_timestamp }}
           BUILD_BRANCH: ${{ steps.version.outputs.build_branch }}
         run: |
@@ -62,7 +63,7 @@ jobs:
             output_name="dist/story-extractor-${GOOS}-${GOARCH}${suffix}"
             echo "Building story-extractor for $GOOS/$GOARCH..."
             GOOS=$GOOS GOARCH=$GOARCH go build \
-              -ldflags "-X ${VERSION_PKG}.BuildTimestamp=${BUILD_TIMESTAMP} -X ${VERSION_PKG}.BuildBranch=${BUILD_BRANCH}" \
+              -ldflags "-X ${VERSION_PKG}.Version=${VERSION} -X ${VERSION_PKG}.BuildTimestamp=${BUILD_TIMESTAMP} -X ${VERSION_PKG}.BuildBranch=${BUILD_BRANCH}" \
               -o "$output_name" \
               ./cmd/story-extractor
 
@@ -70,7 +71,7 @@ jobs:
             output_name="dist/ui-server-${GOOS}-${GOARCH}${suffix}"
             echo "Building ui-server for $GOOS/$GOARCH..."
             GOOS=$GOOS GOARCH=$GOARCH go build \
-              -ldflags "-X ${VERSION_PKG}.BuildTimestamp=${BUILD_TIMESTAMP} -X ${VERSION_PKG}.BuildBranch=${BUILD_BRANCH}" \
+              -ldflags "-X ${VERSION_PKG}.Version=${VERSION} -X ${VERSION_PKG}.BuildTimestamp=${BUILD_TIMESTAMP} -X ${VERSION_PKG}.BuildBranch=${BUILD_BRANCH}" \
               -o "$output_name" \
               ./cmd/ui-server
           done
@@ -82,7 +83,7 @@ jobs:
 
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create ${{ steps.version.outputs.tag }} \
             --title "Release ${{ steps.version.outputs.tag }}" \
