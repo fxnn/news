@@ -9,6 +9,7 @@ import (
 
 // Set at build time via -ldflags.
 var (
+	Version        string
 	BuildTimestamp string
 	BuildBranch    string
 )
@@ -26,6 +27,10 @@ func NewCommand() *cobra.Command {
 }
 
 func String() string {
+	ver := Version
+	if ver == "" {
+		ver = "unknown"
+	}
 	ts := BuildTimestamp
 	if ts == "" {
 		ts = "unknown"
@@ -34,5 +39,5 @@ func String() string {
 	if br == "" {
 		br = "unknown"
 	}
-	return fmt.Sprintf("built %s from %s", ts, br)
+	return fmt.Sprintf("%s built %s from %s", ver, ts, br)
 }
