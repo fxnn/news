@@ -71,5 +71,24 @@ func TestString_WithDefaults(t *testing.T) {
 	Version = ""
 
 	result := String()
+	assert.Contains(t, result, "built")
 	assert.Contains(t, result, "unknown")
+	assert.NotContains(t, result, "unknown built")
+}
+
+func TestString_WithoutVersion(t *testing.T) {
+	prevTimestamp, prevBranch, prevVersion := BuildTimestamp, BuildBranch, Version
+	t.Cleanup(func() {
+		BuildTimestamp = prevTimestamp
+		BuildBranch = prevBranch
+		Version = prevVersion
+	})
+
+	BuildTimestamp = "2025-01-15T10:30:00Z"
+	BuildBranch = "feature/test"
+	Version = ""
+
+	result := String()
+	assert.NotContains(t, result, "unknown")
+	assert.Contains(t, result, "built 2025-01-15T10:30:00Z from feature/test")
 }

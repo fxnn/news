@@ -27,10 +27,6 @@ func NewCommand() *cobra.Command {
 }
 
 func String() string {
-	ver := Version
-	if ver == "" {
-		ver = "unknown"
-	}
 	ts := BuildTimestamp
 	if ts == "" {
 		ts = "unknown"
@@ -39,5 +35,11 @@ func String() string {
 	if br == "" {
 		br = "unknown"
 	}
-	return fmt.Sprintf("%s built %s from %s", ver, ts, br)
+
+	// Only include version prefix if version is set (e.g., from a release tag).
+	// Local/PR builds without a version tag will show just "built {timestamp} from {branch}".
+	if Version != "" {
+		return fmt.Sprintf("%s built %s from %s", Version, ts, br)
+	}
+	return fmt.Sprintf("built %s from %s", ts, br)
 }
