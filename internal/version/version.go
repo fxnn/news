@@ -9,6 +9,7 @@ import (
 
 // Set at build time via -ldflags.
 var (
+	Version        string
 	BuildTimestamp string
 	BuildBranch    string
 )
@@ -33,6 +34,12 @@ func String() string {
 	br := BuildBranch
 	if br == "" {
 		br = "unknown"
+	}
+
+	// Only include version prefix if version is set (e.g., from a release tag).
+	// Local/PR builds without a version tag will show just "built {timestamp} from {branch}".
+	if Version != "" {
+		return fmt.Sprintf("%s built %s from %s", Version, ts, br)
 	}
 	return fmt.Sprintf("built %s from %s", ts, br)
 }
