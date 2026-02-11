@@ -1,0 +1,63 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Go vet tool
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis
+    - unused        # Check for unused code
+    - gofmt         # Check if code is formatted with gofmt
+    - goimports     # Check if imports are properly formatted
+    - gocritic      # Comprehensive linter with many checks
+    - revive        # Fast, configurable, extensible, flexible linter
+    - misspell      # Find commonly misspelled words
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Find unused function parameters
+    - bodyclose     # Check if HTTP response body is closed
+    - errname       # Check error naming conventions
+    - errorlint     # Find code that will cause problems with Go 1.13+ error wrapping
+    - exportloopref # Check for pointers to loop variables
+    - gosec         # Security-oriented linter
+    - nilerr        # Find code that returns nil error but non-nil error value
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    enable-all: true
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - commentFormatting
+      - whyNoLint
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+      - name: package-comments
+        disabled: true
+
+issues:
+  exclude-dirs:
+    - vendor
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

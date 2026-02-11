@@ -1,4 +1,4 @@
-.PHONY: all build story-extractor ui-server test cover fmt vet clean help
+.PHONY: all build story-extractor ui-server test cover fmt vet lint clean help
 
 VERSION_PKG := github.com/fxnn/news/internal/version
 BUILD_TIMESTAMP := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -30,6 +30,9 @@ fmt: ## Format all Go source files
 
 vet: ## Run static analysis
 	go vet ./...
+
+lint: ## Run golangci-lint (requires golangci-lint to be installed)
+	golangci-lint run --timeout=5m
 
 clean: ## Remove binaries and coverage output
 	rm -f story-extractor ui-server coverage.out
