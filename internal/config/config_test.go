@@ -62,10 +62,22 @@ api_key = "test-key"
 }
 
 func TestLoadStoryExtractor_EnvVars(t *testing.T) {
-	os.Setenv("STORY_EXTRACTOR_LLM_PROVIDER", "gemini")
-	os.Setenv("STORY_EXTRACTOR_VERBOSE", "true")
-	defer os.Unsetenv("STORY_EXTRACTOR_LLM_PROVIDER")
-	defer os.Unsetenv("STORY_EXTRACTOR_VERBOSE")
+	if err := os.Setenv("STORY_EXTRACTOR_LLM_PROVIDER", "gemini"); err != nil {
+		t.Fatalf("Failed to set STORY_EXTRACTOR_LLM_PROVIDER: %v", err)
+	}
+	if err := os.Setenv("STORY_EXTRACTOR_VERBOSE", "true"); err != nil {
+		t.Fatalf("Failed to set STORY_EXTRACTOR_VERBOSE: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("STORY_EXTRACTOR_LLM_PROVIDER"); err != nil {
+			t.Errorf("Failed to unset STORY_EXTRACTOR_LLM_PROVIDER: %v", err)
+		}
+	}()
+	defer func() {
+		if err := os.Unsetenv("STORY_EXTRACTOR_VERBOSE"); err != nil {
+			t.Errorf("Failed to unset STORY_EXTRACTOR_VERBOSE: %v", err)
+		}
+	}()
 
 	v := viper.New()
 	SetupStoryExtractor(v)
@@ -83,10 +95,22 @@ func TestLoadStoryExtractor_EnvVars(t *testing.T) {
 }
 
 func TestLoadUiServer_EnvVars(t *testing.T) {
-	os.Setenv("UI_SERVER_PORT", "9090")
-	os.Setenv("UI_SERVER_VERBOSE", "true")
-	defer os.Unsetenv("UI_SERVER_PORT")
-	defer os.Unsetenv("UI_SERVER_VERBOSE")
+	if err := os.Setenv("UI_SERVER_PORT", "9090"); err != nil {
+		t.Fatalf("Failed to set UI_SERVER_PORT: %v", err)
+	}
+	if err := os.Setenv("UI_SERVER_VERBOSE", "true"); err != nil {
+		t.Fatalf("Failed to set UI_SERVER_VERBOSE: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("UI_SERVER_PORT"); err != nil {
+			t.Errorf("Failed to unset UI_SERVER_PORT: %v", err)
+		}
+	}()
+	defer func() {
+		if err := os.Unsetenv("UI_SERVER_VERBOSE"); err != nil {
+			t.Errorf("Failed to unset UI_SERVER_VERBOSE: %v", err)
+		}
+	}()
 
 	v := viper.New()
 	SetupUiServer(v)
