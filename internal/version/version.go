@@ -21,7 +21,7 @@ func NewCommand() *cobra.Command {
 		Short: "Print build version information",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), String())
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), String()) //nolint:errcheck // Errors writing to stdout are not actionable
 		},
 	}
 }

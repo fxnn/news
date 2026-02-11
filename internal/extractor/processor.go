@@ -87,7 +87,7 @@ var errSkipped = fmt.Errorf("email skipped")
 
 func (p *Processor) processEmail(index int, path string) error {
 	// Open and parse email
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec // G304: Path is from maildir reader, validated by caller
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}

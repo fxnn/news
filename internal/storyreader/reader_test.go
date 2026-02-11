@@ -118,7 +118,7 @@ func TestReadStories_InvalidJSON(t *testing.T) {
 
 	// Create an invalid JSON file
 	invalidFile := filepath.Join(tmpDir, "2006-01-02_test@example.com_1.json")
-	if err := os.WriteFile(invalidFile, []byte("invalid json"), 0644); err != nil {
+	if err := os.WriteFile(invalidFile, []byte("invalid json"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
