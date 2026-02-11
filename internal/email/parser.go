@@ -140,7 +140,9 @@ func parseMultipart(body io.Reader, boundary string) (string, error) {
 		}
 
 		func() {
-			defer part.Close()
+			defer func() {
+				_ = part.Close() //nolint:errcheck // Best effort close, no action to take on error
+			}()
 
 			contentType := part.Header.Get("Content-Type")
 			mediaType, _, err := mime.ParseMediaType(contentType)
