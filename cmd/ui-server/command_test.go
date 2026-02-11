@@ -86,7 +86,7 @@ storydir = "/file/stories"
 savedir = "/file/saved"
 port = 9090
 verbose = true
-`), 0o644)
+`), 0o600)
 	require.NoError(t, err)
 
 	v := viper.New()
