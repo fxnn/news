@@ -21,11 +21,12 @@ func NewCommand() *cobra.Command {
 		Short: "Print build version information",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintln(cmd.OutOrStdout(), String())
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), String())
 		},
 	}
 }
 
+// String returns a formatted version string including build metadata.
 func String() string {
 	ts := BuildTimestamp
 	if ts == "" {

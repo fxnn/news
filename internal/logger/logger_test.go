@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"log/slog"
 	"strings"
 	"testing"
@@ -13,11 +14,11 @@ func TestNew_InfoLevel(t *testing.T) {
 		t.Fatal("New() returned nil logger")
 	}
 
-	if !log.Enabled(nil, slog.LevelInfo) {
+	if !log.Enabled(context.TODO(), slog.LevelInfo) {
 		t.Error("Logger should be enabled for INFO level when verbose=false")
 	}
 
-	if log.Enabled(nil, slog.LevelDebug) {
+	if log.Enabled(context.TODO(), slog.LevelDebug) {
 		t.Error("Logger should not be enabled for DEBUG level when verbose=false")
 	}
 }
@@ -28,11 +29,11 @@ func TestNew_DebugLevel(t *testing.T) {
 		t.Fatal("New() returned nil logger")
 	}
 
-	if !log.Enabled(nil, slog.LevelInfo) {
+	if !log.Enabled(context.TODO(), slog.LevelInfo) {
 		t.Error("Logger should be enabled for INFO level when verbose=true")
 	}
 
-	if !log.Enabled(nil, slog.LevelDebug) {
+	if !log.Enabled(context.TODO(), slog.LevelDebug) {
 		t.Error("Logger should be enabled for DEBUG level when verbose=true")
 	}
 }

@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -61,7 +62,7 @@ func (p *Processor) Run() (*Result, error) {
 		p.log.Debug("processing email", "index", i+1, "path", path)
 
 		if err := p.processEmail(i, path); err != nil {
-			if err == errSkipped {
+			if errors.Is(err, errSkipped) {
 				result.Skipped++
 			} else {
 				p.log.Warn("failed to process email", "path", path, "error", err)
@@ -91,8 +92,8 @@ func (p *Processor) processEmail(index int, path string) error {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
-			p.log.Warn("failed to close file", "path", path, "error", err)
+		if closeErr := file.Close(); closeErr != nil {
+			p.log.Warn("failed to close file", "path", path, "error", closeErr)
 		}
 	}()
 

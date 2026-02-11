@@ -42,7 +42,7 @@ func TestHandleStories_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -70,7 +70,7 @@ func TestHandleStories_Success(t *testing.T) {
 func TestHandleStories_EmptyDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -93,7 +93,7 @@ func TestHandleStories_EmptyDirectory(t *testing.T) {
 func TestHandleStories_NonExistentDirectory(t *testing.T) {
 	nonexistentDir := filepath.Join(t.TempDir(), "does-not-exist")
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, nonexistentDir, "")
@@ -164,7 +164,7 @@ func TestHandleStories_SortedByDate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -227,7 +227,7 @@ func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, storydir, savedir)
@@ -273,7 +273,7 @@ func TestHandleStories_NonExistentSavedirIsEmpty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, storydir, nonexistentSavedir)

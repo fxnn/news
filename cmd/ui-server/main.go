@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/logger"
@@ -87,7 +88,16 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 				}
 			})
 
-			if err := http.ListenAndServe(addr, mux); err != nil {
+			server := &http.Server{
+				Addr:              addr,
+				Handler:           mux,
+				ReadHeaderTimeout: 10 * time.Second,
+				ReadTimeout:       30 * time.Second,
+				WriteTimeout:      30 * time.Second,
+				IdleTimeout:       60 * time.Second,
+			}
+
+			if err := server.ListenAndServe(); err != nil {
 				return err
 			}
 

@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// New creates a new structured logger with the specified verbosity level.
 func New(verbose bool) *slog.Logger {
 	level := slog.LevelInfo
 	if verbose {

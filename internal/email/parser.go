@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -16,6 +17,7 @@ import (
 	"golang.org/x/net/html"
 )
 
+// Email represents a parsed email message with extracted metadata.
 type Email struct {
 	Subject   string
 	Body      string
@@ -98,19 +100,20 @@ func Parse(r io.Reader) (*Email, error) {
 		return email, nil
 	}
 
-	if strings.HasPrefix(mediaType, "multipart/") {
+	switch {
+	case strings.HasPrefix(mediaType, "multipart/"):
 		body, err := parseMultipart(msg.Body, params["boundary"])
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse multipart: %w", err)
 		}
 		email.Body = body
-	} else if mediaType == "text/html" {
+	case mediaType == "text/html":
 		body, err := io.ReadAll(msg.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read HTML body: %w", err)
 		}
 		email.Body = extractTextFromHTML(string(body))
-	} else {
+	default:
 		body, err := io.ReadAll(msg.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read body: %w", err)
@@ -129,7 +132,7 @@ func parseMultipart(body io.Reader, boundary string) (string, error) {
 
 	for {
 		part, err := mr.NextPart()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

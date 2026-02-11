@@ -19,6 +19,7 @@ type StubExtractor struct {
 	Stories []ExtractedStory
 }
 
+// Extract returns the pre-configured stories for testing purposes.
 func (s *StubExtractor) Extract(emailData *email.Email) ([]Story, error) {
 	var stories []Story
 
