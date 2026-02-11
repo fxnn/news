@@ -139,24 +139,28 @@ func parseMultipart(body io.Reader, boundary string) (string, error) {
 			return "", err
 		}
 
-		contentType := part.Header.Get("Content-Type")
-		mediaType, _, err := mime.ParseMediaType(contentType)
-		if err != nil {
-			// Skip parts with invalid content type
-			continue
-		}
+		func() {
+			defer part.Close()
 
-		partBody, err := io.ReadAll(part)
-		if err != nil {
-			continue
-		}
+			contentType := part.Header.Get("Content-Type")
+			mediaType, _, err := mime.ParseMediaType(contentType)
+			if err != nil {
+				// Skip parts with invalid content type
+				return
+			}
 
-		switch mediaType {
-		case "text/plain":
-			plainText = string(partBody)
-		case "text/html":
-			htmlText = string(partBody)
-		}
+			partBody, err := io.ReadAll(part)
+			if err != nil {
+				return
+			}
+
+			switch mediaType {
+			case "text/plain":
+				plainText = string(partBody)
+			case "text/html":
+				htmlText = string(partBody)
+			}
+		}()
 	}
 
 	// Prefer plain text over HTML

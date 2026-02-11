@@ -112,18 +112,12 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	f.Int("port", 8080, "Port to listen on")
 	f.Bool("verbose", false, "Enable verbose output")
 
-	if err := v.BindPFlag("storydir", f.Lookup("storydir")); err != nil {
-		panic(fmt.Sprintf("Failed to bind storydir flag: %v", err))
-	}
-	if err := v.BindPFlag("savedir", f.Lookup("savedir")); err != nil {
-		panic(fmt.Sprintf("Failed to bind savedir flag: %v", err))
-	}
-	if err := v.BindPFlag("port", f.Lookup("port")); err != nil {
-		panic(fmt.Sprintf("Failed to bind port flag: %v", err))
-	}
-	if err := v.BindPFlag("verbose", f.Lookup("verbose")); err != nil {
-		panic(fmt.Sprintf("Failed to bind verbose flag: %v", err))
-	}
+	// BindPFlag should never fail (only fails if flag doesn't exist, which is a programming error)
+	// but if it does, exit cleanly rather than panic
+	cobra.CheckErr(v.BindPFlag("storydir", f.Lookup("storydir")))
+	cobra.CheckErr(v.BindPFlag("savedir", f.Lookup("savedir")))
+	cobra.CheckErr(v.BindPFlag("port", f.Lookup("port")))
+	cobra.CheckErr(v.BindPFlag("verbose", f.Lookup("verbose")))
 
 	cmd.AddCommand(version.NewCommand())
 

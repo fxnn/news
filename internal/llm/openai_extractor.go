@@ -31,8 +31,8 @@ func NewOpenAIExtractor(cfg *config.LLM) *OpenAIExtractor {
 	}
 }
 
-// Response represents the JSON structure returned by the LLM.
-type Response struct {
+// response represents the JSON structure returned by the LLM.
+type response struct {
 	Stories []story.ExtractedStory `json:"stories"`
 }
 
@@ -73,7 +73,7 @@ func (e *OpenAIExtractor) Extract(emailData *email.Email) ([]story.Story, error)
 		return nil, fmt.Errorf("LLM response truncated: output exceeded token limit")
 	}
 
-	var llmResp Response
+	var llmResp response
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &llmResp); err != nil {
 		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
 	}
