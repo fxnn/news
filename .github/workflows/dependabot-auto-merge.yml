@@ -1,7 +1,7 @@
 name: Dependabot Auto-Merge
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Check if non-major update
-        id: check-version
+        id: check_version
         run: |
           echo "Update type: ${{ steps.metadata.outputs.update-type }}"
           if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-major" ]]; then
@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Approve PR
-        if: steps.check-version.outputs.is_major == 'false'
+        if: steps.check_version.outputs.is_major == 'false'
         run: |
           gh pr review "${{ github.event.pull_request.number }}" --approve
         env:
@@ -41,7 +41,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
 
       - name: Enable auto-merge
-        if: steps.check-version.outputs.is_major == 'false'
+        if: steps.check_version.outputs.is_major == 'false'
         run: |
           gh pr merge "${{ github.event.pull_request.number }}" --auto --squash
         env:
