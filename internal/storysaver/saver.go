@@ -73,12 +73,12 @@ func Save(storydir, savedir, filename string) error {
 
 	n, err := tmpFile.Write(data)
 	if err != nil {
-		_ = tmpFile.Close() //nolint:errcheck // Best effort cleanup in error path
+		_ = tmpFile.Close()    //nolint:errcheck // Best effort cleanup in error path
 		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}
 	if n != len(data) {
-		_ = tmpFile.Close() //nolint:errcheck // Best effort cleanup in error path
+		_ = tmpFile.Close()    //nolint:errcheck // Best effort cleanup in error path
 		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("short write: wrote %d of %d bytes", n, len(data))
 	}
