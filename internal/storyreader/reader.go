@@ -27,7 +27,7 @@ func ReadStories(dir string) ([]story.Story, error) {
 	stories := []story.Story{}
 
 	for _, path := range matches {
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // G304: Paths from Glob pattern, constrained to storydir
 		if err != nil {
 			// Skip files we can't read
 			continue

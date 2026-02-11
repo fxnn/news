@@ -141,7 +141,7 @@ verbose = true
 [llm]
 api_key = "file-key"
 `
-	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	err := os.WriteFile(configFile, []byte(configContent), 0o600)
 	require.NoError(t, err)
 
 	v := viper.New()
@@ -170,7 +170,7 @@ func TestExtractorCmd_PrecedenceOrder(t *testing.T) {
 	// 1. Create Config File
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "precedence.toml")
-	err := os.WriteFile(configFile, []byte(`maildir = "file"`), 0644)
+	err := os.WriteFile(configFile, []byte(`maildir = "file"`), 0o600)
 	require.NoError(t, err)
 
 	v := viper.New()

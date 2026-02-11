@@ -2,6 +2,7 @@ package story
 
 import "time"
 
+// Story represents a news story extracted from an email newsletter.
 type Story struct {
 	Headline  string    `json:"headline"`
 	Teaser    string    `json:"teaser"`

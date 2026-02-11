@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -27,6 +28,7 @@ type UiServer struct {
 	Verbose  bool   `mapstructure:"verbose"`
 }
 
+// LLM represents the configuration for a Large Language Model provider.
 type LLM struct {
 	Provider string `mapstructure:"provider"`
 	Model    string `mapstructure:"model"`
@@ -58,7 +60,7 @@ func SetupUiServer(v *viper.Viper) {
 	v.AutomaticEnv()
 }
 
-func loadConfig(v *viper.Viper, cfgFile string, configName string, target interface{}) error {
+func loadConfig(v *viper.Viper, cfgFile, configName string, target interface{}) error {
 	if cfgFile != "" {
 		v.SetConfigFile(cfgFile)
 	} else {
@@ -69,7 +71,8 @@ func loadConfig(v *viper.Viper, cfgFile string, configName string, target interf
 	}
 
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var notFoundErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &notFoundErr) {
 			return fmt.Errorf("error reading config file: %w", err)
 		}
 		if cfgFile != "" {

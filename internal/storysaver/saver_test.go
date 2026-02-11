@@ -1,6 +1,7 @@
 package storysaver
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,12 +25,12 @@ func TestListSavedFilenames_WithFiles(t *testing.T) {
 
 	// Create some JSON files
 	for _, name := range []string{"story1.json", "story2.json"} {
-		if err := os.WriteFile(filepath.Join(tmpDir, name), []byte("{}"), 0600); err != nil {
+		if err := os.WriteFile(filepath.Join(tmpDir, name), []byte("{}"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
 	// Create a non-JSON file that should be ignored
-	if err := os.WriteFile(filepath.Join(tmpDir, "notes.txt"), []byte("hi"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "notes.txt"), []byte("hi"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -63,7 +64,7 @@ func TestListSavedFilenames_NonExistentDir(t *testing.T) {
 func TestListSavedFilenames_SavedirIsFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	notADir := filepath.Join(tmpDir, "file.txt")
-	if err := os.WriteFile(notADir, []byte("not a directory"), 0600); err != nil {
+	if err := os.WriteFile(notADir, []byte("not a directory"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -78,7 +79,7 @@ func TestSave_CopiesFile(t *testing.T) {
 	savedir := t.TempDir()
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -86,11 +87,11 @@ func TestSave_CopiesFile(t *testing.T) {
 		t.Fatalf("Save() unexpected error: %v", err)
 	}
 
-	saved, err := os.ReadFile(filepath.Join(savedir, "story.json"))
+	saved, err := os.ReadFile(filepath.Join(savedir, "story.json")) //nolint:gosec // G304: Reading test file in test directory
 	if err != nil {
 		t.Fatalf("saved file not found: %v", err)
 	}
-	if string(saved) != string(content) {
+	if !bytes.Equal(saved, content) {
 		t.Errorf("saved content = %q, want %q", saved, content)
 	}
 }
@@ -110,10 +111,10 @@ func TestSave_AlreadyExists(t *testing.T) {
 	savedir := t.TempDir()
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(savedir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -154,7 +155,7 @@ func TestSave_LeavesNoTempFiles(t *testing.T) {
 	savedir := t.TempDir()
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -179,7 +180,7 @@ func TestSave_CreatesSavedirIfNotExists(t *testing.T) {
 	savedir := filepath.Join(t.TempDir(), "new-subdir")
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,7 +196,7 @@ func TestSave_CreatesSavedirIfNotExists(t *testing.T) {
 func TestUnsave_RemovesFile(t *testing.T) {
 	savedir := t.TempDir()
 
-	if err := os.WriteFile(filepath.Join(savedir, "story.json"), []byte("{}"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

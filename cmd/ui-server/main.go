@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/fxnn/news/internal/config"
 	"github.com/fxnn/news/internal/logger"
@@ -82,10 +83,21 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				w.Write(indexHTML)
+				if _, err := w.Write(indexHTML); err != nil {
+					slog.Error("Failed to write response", "error", err)
+				}
 			})
 
-			if err := http.ListenAndServe(addr, mux); err != nil {
+			server := &http.Server{
+				Addr:              addr,
+				Handler:           mux,
+				ReadHeaderTimeout: 10 * time.Second,
+				ReadTimeout:       30 * time.Second,
+				WriteTimeout:      30 * time.Second,
+				IdleTimeout:       60 * time.Second,
+			}
+
+			if err := server.ListenAndServe(); err != nil {
 				return err
 			}
 
@@ -100,10 +112,12 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	f.Int("port", 8080, "Port to listen on")
 	f.Bool("verbose", false, "Enable verbose output")
 
-	v.BindPFlag("storydir", f.Lookup("storydir"))
-	v.BindPFlag("savedir", f.Lookup("savedir"))
-	v.BindPFlag("port", f.Lookup("port"))
-	v.BindPFlag("verbose", f.Lookup("verbose"))
+	// BindPFlag should never fail (only fails if flag doesn't exist, which is a programming error)
+	// but if it does, exit cleanly rather than panic
+	cobra.CheckErr(v.BindPFlag("storydir", f.Lookup("storydir")))
+	cobra.CheckErr(v.BindPFlag("savedir", f.Lookup("savedir")))
+	cobra.CheckErr(v.BindPFlag("port", f.Lookup("port")))
+	cobra.CheckErr(v.BindPFlag("verbose", f.Lookup("verbose")))
 
 	cmd.AddCommand(version.NewCommand())
 

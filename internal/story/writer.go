@@ -35,14 +35,14 @@ func WriteStoriesToDir(dir, messageID string, date time.Time, stories []Story) e
 
 		// Use 0600 permissions (owner read/write only) for privacy
 		// Newsletter content may contain sensitive information
-		if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+		if err := os.WriteFile(tmpPath, data, 0o600); err != nil {
 			return fmt.Errorf("failed to write temp file: %w", err)
 		}
 
 		// Atomic rename - if this fails, another process won the race
 		if err := os.Rename(tmpPath, path); err != nil {
 			// Clean up temp file
-			os.Remove(tmpPath)
+			_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 			// Check if target file now exists (another process created it)
 			if _, statErr := os.Stat(path); statErr == nil {
 				continue // File exists now, another process won the race
