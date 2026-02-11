@@ -16,9 +16,15 @@ func TestProcessor_Run_EmptyMaildir(t *testing.T) {
 	tmpStorydir := t.TempDir()
 
 	// Create Maildir structure
-	os.MkdirAll(filepath.Join(tmpMaildir, "cur"), 0755)
-	os.MkdirAll(filepath.Join(tmpMaildir, "new"), 0755)
-	os.MkdirAll(filepath.Join(tmpMaildir, "tmp"), 0755)
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "cur"), 0755); err != nil {
+		t.Fatalf("Failed to create cur directory: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "new"), 0755); err != nil {
+		t.Fatalf("Failed to create new directory: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "tmp"), 0755); err != nil {
+		t.Fatalf("Failed to create tmp directory: %v", err)
+	}
 
 	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
@@ -55,7 +61,9 @@ func TestProcessor_Run_SingleEmail(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a test email
 	emailContent := `From: Test User <test@example.com>
@@ -120,7 +128,9 @@ func TestProcessor_Run_SkipsExistingStories(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a test email
 	emailContent := `From: Test User <test@example.com>
@@ -181,7 +191,9 @@ func TestProcessor_Run_WithLimit(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create multiple test emails
 	for i := 1; i <= 5; i++ {
@@ -235,7 +247,9 @@ func TestProcessor_Run_InvalidEmail(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create an invalid email file
 	emailPath := filepath.Join(curDir, "invalid.eml")
@@ -282,7 +296,9 @@ func TestProcessor_Run_MultipleEmailsMixedResults(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a valid email
 	validEmail := `From: Test User <test@example.com>

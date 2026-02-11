@@ -86,13 +86,27 @@ func NewStoryExtractorCmd(v *viper.Viper, runFn RunExtractorFunc) *cobra.Command
 	f.Bool("log-bodies", false, "Log email bodies")
 	f.Bool("log-stories", false, "Log extracted stories")
 
-	v.BindPFlag("maildir", f.Lookup("maildir"))
-	v.BindPFlag("storydir", f.Lookup("storydir"))
-	v.BindPFlag("limit", f.Lookup("limit"))
-	v.BindPFlag("verbose", f.Lookup("verbose"))
-	v.BindPFlag("log_headers", f.Lookup("log-headers"))
-	v.BindPFlag("log_bodies", f.Lookup("log-bodies"))
-	v.BindPFlag("log_stories", f.Lookup("log-stories"))
+	if err := v.BindPFlag("maildir", f.Lookup("maildir")); err != nil {
+		panic(fmt.Sprintf("Failed to bind maildir flag: %v", err))
+	}
+	if err := v.BindPFlag("storydir", f.Lookup("storydir")); err != nil {
+		panic(fmt.Sprintf("Failed to bind storydir flag: %v", err))
+	}
+	if err := v.BindPFlag("limit", f.Lookup("limit")); err != nil {
+		panic(fmt.Sprintf("Failed to bind limit flag: %v", err))
+	}
+	if err := v.BindPFlag("verbose", f.Lookup("verbose")); err != nil {
+		panic(fmt.Sprintf("Failed to bind verbose flag: %v", err))
+	}
+	if err := v.BindPFlag("log_headers", f.Lookup("log-headers")); err != nil {
+		panic(fmt.Sprintf("Failed to bind log_headers flag: %v", err))
+	}
+	if err := v.BindPFlag("log_bodies", f.Lookup("log-bodies")); err != nil {
+		panic(fmt.Sprintf("Failed to bind log_bodies flag: %v", err))
+	}
+	if err := v.BindPFlag("log_stories", f.Lookup("log-stories")); err != nil {
+		panic(fmt.Sprintf("Failed to bind log_stories flag: %v", err))
+	}
 
 	cmd.AddCommand(version.NewCommand())
 

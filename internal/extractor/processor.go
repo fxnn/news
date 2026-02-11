@@ -90,10 +90,13 @@ func (p *Processor) processEmail(index int, path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			p.log.Warn("failed to close file", "path", path, "error", err)
+		}
+	}()
 
 	parsedEmail, err := email.Parse(file)
-	file.Close()
-
 	if err != nil {
 		return fmt.Errorf("failed to parse email: %w", err)
 	}

@@ -90,7 +90,10 @@ func Parse(r io.Reader) (*Email, error) {
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		// Default to plain text if Content-Type can't be parsed
-		body, _ := io.ReadAll(msg.Body)
+		body, err := io.ReadAll(msg.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read body: %w", err)
+		}
 		email.Body = string(body)
 		return email, nil
 	}
@@ -102,10 +105,16 @@ func Parse(r io.Reader) (*Email, error) {
 		}
 		email.Body = body
 	} else if mediaType == "text/html" {
-		body, _ := io.ReadAll(msg.Body)
+		body, err := io.ReadAll(msg.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read HTML body: %w", err)
+		}
 		email.Body = extractTextFromHTML(string(body))
 	} else {
-		body, _ := io.ReadAll(msg.Body)
+		body, err := io.ReadAll(msg.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read body: %w", err)
+		}
 		email.Body = string(body)
 	}
 
@@ -128,7 +137,11 @@ func parseMultipart(body io.Reader, boundary string) (string, error) {
 		}
 
 		contentType := part.Header.Get("Content-Type")
-		mediaType, _, _ := mime.ParseMediaType(contentType)
+		mediaType, _, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			// Skip parts with invalid content type
+			continue
+		}
 
 		partBody, err := io.ReadAll(part)
 		if err != nil {
