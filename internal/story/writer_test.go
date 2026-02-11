@@ -129,7 +129,7 @@ func TestWriter_FilePermissions(t *testing.T) {
 	}
 
 	mode := fileInfo.Mode()
-	expectedMode := os.FileMode(0600)
+	expectedMode := os.FileMode(0o600)
 
 	if mode.Perm() != expectedMode {
 		t.Errorf("File permissions = %04o, want %04o (owner read/write only for privacy)",

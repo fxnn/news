@@ -42,7 +42,7 @@ model = "claude-3-opus"
 api_key = "test-key"
 `
 	configPath := filepath.Join(tmpDir, "config.toml")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -149,7 +149,7 @@ func TestLoadUiServer_SavedirFromConfigFile(t *testing.T) {
 	savedir := filepath.Join(tmpDir, "saved")
 	configContent := "storydir = " + quote(storydir) + "\nsavedir = " + quote(savedir) + "\nport = 8080\n"
 	configPath := filepath.Join(tmpDir, "ui-server.toml")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

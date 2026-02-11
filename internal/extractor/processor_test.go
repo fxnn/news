@@ -75,7 +75,7 @@ Message-ID: <test123@example.com>
 This is a test email body.
 `
 	emailPath := filepath.Join(curDir, "test.eml")
-	if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -142,7 +142,7 @@ Message-ID: <test123@example.com>
 This is a test email body.
 `
 	emailPath := filepath.Join(curDir, "test.eml")
-	if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -206,7 +206,7 @@ Message-ID: <test` + string(rune('0'+i)) + `@example.com>
 This is a test email body.
 `
 		emailPath := filepath.Join(curDir, "test"+string(rune('0'+i))+".eml")
-		if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+		if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -253,7 +253,7 @@ func TestProcessor_Run_InvalidEmail(t *testing.T) {
 
 	// Create an invalid email file
 	emailPath := filepath.Join(curDir, "invalid.eml")
-	if err := os.WriteFile(emailPath, []byte("not a valid email"), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte("not a valid email"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -310,13 +310,13 @@ Message-ID: <valid@example.com>
 This is a valid email.
 `
 	validPath := filepath.Join(curDir, "valid.eml")
-	if err := os.WriteFile(validPath, []byte(validEmail), 0644); err != nil {
+	if err := os.WriteFile(validPath, []byte(validEmail), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create an invalid email
 	invalidPath := filepath.Join(curDir, "invalid.eml")
-	if err := os.WriteFile(invalidPath, []byte("invalid"), 0644); err != nil {
+	if err := os.WriteFile(invalidPath, []byte("invalid"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -330,7 +330,7 @@ Message-ID: <skip@example.com>
 This should be skipped.
 `
 	skipPath := filepath.Join(curDir, "skip.eml")
-	if err := os.WriteFile(skipPath, []byte(skipEmail), 0644); err != nil {
+	if err := os.WriteFile(skipPath, []byte(skipEmail), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
