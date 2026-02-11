@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -84,7 +83,7 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				if _, err := w.Write(indexHTML); err != nil {
-					log.Printf("Failed to write response: %v", err)
+					slog.Error("Failed to write response", "error", err)
 				}
 			})
 
@@ -104,16 +103,16 @@ func NewUiServerCmd(v *viper.Viper, runFn RunServerFunc) *cobra.Command {
 	f.Bool("verbose", false, "Enable verbose output")
 
 	if err := v.BindPFlag("storydir", f.Lookup("storydir")); err != nil {
-		log.Fatalf("Failed to bind storydir flag: %v", err)
+		panic(fmt.Sprintf("Failed to bind storydir flag: %v", err))
 	}
 	if err := v.BindPFlag("savedir", f.Lookup("savedir")); err != nil {
-		log.Fatalf("Failed to bind savedir flag: %v", err)
+		panic(fmt.Sprintf("Failed to bind savedir flag: %v", err))
 	}
 	if err := v.BindPFlag("port", f.Lookup("port")); err != nil {
-		log.Fatalf("Failed to bind port flag: %v", err)
+		panic(fmt.Sprintf("Failed to bind port flag: %v", err))
 	}
 	if err := v.BindPFlag("verbose", f.Lookup("verbose")); err != nil {
-		log.Fatalf("Failed to bind verbose flag: %v", err)
+		panic(fmt.Sprintf("Failed to bind verbose flag: %v", err))
 	}
 
 	cmd.AddCommand(version.NewCommand())
