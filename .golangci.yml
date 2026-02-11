@@ -1,8 +1,7 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
-  tests: true
 
 linters:
   enable:
@@ -21,40 +20,23 @@ linters:
     - errorlint     # Find code that will cause problems with Go 1.13+ error wrapping
     - gosec         # Security-oriented linter
     - nilerr        # Find code that returns nil error but non-nil error value
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  govet:
-    enable-all: true
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-    disabled-checks:
-      - commentFormatting
-      - whyNoLint
-  revive:
-    rules:
-      - name: exported
-        disabled: false
-      - name: package-comments
-        disabled: true
-
-issues:
-  exclude-dirs:
-    - vendor
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gosec
-        - errcheck
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
-output:
-  format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    govet:
+      enable-all: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - commentFormatting
+        - whyNoLint
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+        - name: package-comments
+          disabled: true
