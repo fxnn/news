@@ -29,7 +29,7 @@ func TestStoriesExist_WithMatchingFiles(t *testing.T) {
 	// Create a matching story file
 	filename := "2006-01-02_test123@example.com_1.json"
 	path := filepath.Join(tmpDir, filename)
-	if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -52,7 +52,7 @@ func TestStoriesExist_WithMultipleMatchingFiles(t *testing.T) {
 	// Create multiple matching story files
 	for i := 1; i <= 3; i++ {
 		filename := filepath.Join(tmpDir, "2006-01-02_test@example.com_"+string(rune('0'+i))+".json")
-		if err := os.WriteFile(filename, []byte("{}"), 0644); err != nil {
+		if err := os.WriteFile(filename, []byte("{}"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -76,7 +76,7 @@ func TestStoriesExist_DifferentMessageID(t *testing.T) {
 	// Create a file with different message ID
 	filename := "2006-01-02_other@example.com_1.json"
 	path := filepath.Join(tmpDir, filename)
-	if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,7 +99,7 @@ func TestStoriesExist_DifferentDate(t *testing.T) {
 	// Create a file with different date
 	filename := "2006-01-03_test@example.com_1.json"
 	path := filepath.Join(tmpDir, filename)
-	if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

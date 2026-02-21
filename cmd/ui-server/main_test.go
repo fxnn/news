@@ -42,7 +42,7 @@ func TestHandleStories_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -70,7 +70,7 @@ func TestHandleStories_Success(t *testing.T) {
 func TestHandleStories_EmptyDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -93,7 +93,7 @@ func TestHandleStories_EmptyDirectory(t *testing.T) {
 func TestHandleStories_NonExistentDirectory(t *testing.T) {
 	nonexistentDir := filepath.Join(t.TempDir(), "does-not-exist")
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, nonexistentDir, "")
@@ -115,7 +115,7 @@ func TestHandleStories_MethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/stories", nil)
+			req := httptest.NewRequest(method, "/api/stories", http.NoBody)
 			w := httptest.NewRecorder()
 
 			handleStories(w, req, tmpDir, "")
@@ -164,7 +164,7 @@ func TestHandleStories_SortedByDate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, tmpDir, "")
@@ -219,15 +219,15 @@ func TestHandleStories_AnnotatesSavedStories(t *testing.T) {
 
 	// Copy only the first story to savedir to mark it as saved
 	firstStoryFilename := "2006-01-02_test@example.com_1.json"
-	data, err := os.ReadFile(filepath.Join(storydir, firstStoryFilename))
+	data, err := os.ReadFile(filepath.Join(storydir, firstStoryFilename)) //nolint:gosec // G304: Reading test file in test directory
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(savedir, firstStoryFilename), data, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(savedir, firstStoryFilename), data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, storydir, savedir)
@@ -273,7 +273,7 @@ func TestHandleStories_NonExistentSavedirIsEmpty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stories", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stories", http.NoBody)
 	w := httptest.NewRecorder()
 
 	handleStories(w, req, storydir, nonexistentSavedir)
@@ -288,11 +288,11 @@ func TestHandleSaveStory_Success(t *testing.T) {
 	savedir := t.TempDir()
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/stories/story.json/save", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/stories/story.json/save", http.NoBody)
 	req.SetPathValue("filename", "story.json")
 	w := httptest.NewRecorder()
 
@@ -311,7 +311,7 @@ func TestHandleSaveStory_NotFound(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/stories/nonexistent.json/save", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/stories/nonexistent.json/save", http.NoBody)
 	req.SetPathValue("filename", "nonexistent.json")
 	w := httptest.NewRecorder()
 
@@ -327,14 +327,14 @@ func TestHandleSaveStory_AlreadySaved(t *testing.T) {
 	savedir := t.TempDir()
 
 	content := []byte(`{"headline":"Test"}`)
-	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(storydir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(savedir, "story.json"), content, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/stories/story.json/save", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/stories/story.json/save", http.NoBody)
 	req.SetPathValue("filename", "story.json")
 	w := httptest.NewRecorder()
 
@@ -349,7 +349,7 @@ func TestHandleSaveStory_PathTraversal(t *testing.T) {
 	storydir := t.TempDir()
 	savedir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/stories/../evil.json/save", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/stories/../evil.json/save", http.NoBody)
 	req.SetPathValue("filename", "../evil.json")
 	w := httptest.NewRecorder()
 
@@ -368,11 +368,11 @@ func TestHandleSaveStory_PathTraversal(t *testing.T) {
 func TestHandleUnsaveStory_Success(t *testing.T) {
 	savedir := t.TempDir()
 
-	if err := os.WriteFile(filepath.Join(savedir, "story.json"), []byte("{}"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(savedir, "story.json"), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/stories/story.json/save", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/stories/story.json/save", http.NoBody)
 	req.SetPathValue("filename", "story.json")
 	w := httptest.NewRecorder()
 
@@ -390,7 +390,7 @@ func TestHandleUnsaveStory_Success(t *testing.T) {
 func TestHandleUnsaveStory_NotSaved(t *testing.T) {
 	savedir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/stories/nonexistent.json/save", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/stories/nonexistent.json/save", http.NoBody)
 	req.SetPathValue("filename", "nonexistent.json")
 	w := httptest.NewRecorder()
 
@@ -404,7 +404,7 @@ func TestHandleUnsaveStory_NotSaved(t *testing.T) {
 func TestHandleUnsaveStory_PathTraversal(t *testing.T) {
 	savedir := t.TempDir()
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/stories/../evil.json/save", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/stories/../evil.json/save", http.NoBody)
 	req.SetPathValue("filename", "../evil.json")
 	w := httptest.NewRecorder()
 

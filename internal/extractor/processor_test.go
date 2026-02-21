@@ -16,9 +16,15 @@ func TestProcessor_Run_EmptyMaildir(t *testing.T) {
 	tmpStorydir := t.TempDir()
 
 	// Create Maildir structure
-	os.MkdirAll(filepath.Join(tmpMaildir, "cur"), 0755)
-	os.MkdirAll(filepath.Join(tmpMaildir, "new"), 0755)
-	os.MkdirAll(filepath.Join(tmpMaildir, "tmp"), 0755)
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "cur"), 0o750); err != nil {
+		t.Fatalf("Failed to create cur directory: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "new"), 0o750); err != nil {
+		t.Fatalf("Failed to create new directory: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpMaildir, "tmp"), 0o750); err != nil {
+		t.Fatalf("Failed to create tmp directory: %v", err)
+	}
 
 	cfg := &config.StoryExtractor{
 		Maildir:  tmpMaildir,
@@ -55,7 +61,9 @@ func TestProcessor_Run_SingleEmail(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0o750); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a test email
 	emailContent := `From: Test User <test@example.com>
@@ -67,7 +75,7 @@ Message-ID: <test123@example.com>
 This is a test email body.
 `
 	emailPath := filepath.Join(curDir, "test.eml")
-	if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +128,9 @@ func TestProcessor_Run_SkipsExistingStories(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0o750); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a test email
 	emailContent := `From: Test User <test@example.com>
@@ -132,7 +142,7 @@ Message-ID: <test123@example.com>
 This is a test email body.
 `
 	emailPath := filepath.Join(curDir, "test.eml")
-	if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -181,7 +191,9 @@ func TestProcessor_Run_WithLimit(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0o750); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create multiple test emails
 	for i := 1; i <= 5; i++ {
@@ -194,7 +206,7 @@ Message-ID: <test` + string(rune('0'+i)) + `@example.com>
 This is a test email body.
 `
 		emailPath := filepath.Join(curDir, "test"+string(rune('0'+i))+".eml")
-		if err := os.WriteFile(emailPath, []byte(emailContent), 0644); err != nil {
+		if err := os.WriteFile(emailPath, []byte(emailContent), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -235,11 +247,13 @@ func TestProcessor_Run_InvalidEmail(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0o750); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create an invalid email file
 	emailPath := filepath.Join(curDir, "invalid.eml")
-	if err := os.WriteFile(emailPath, []byte("not a valid email"), 0644); err != nil {
+	if err := os.WriteFile(emailPath, []byte("not a valid email"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -282,7 +296,9 @@ func TestProcessor_Run_MultipleEmailsMixedResults(t *testing.T) {
 
 	// Create Maildir structure
 	curDir := filepath.Join(tmpMaildir, "cur")
-	os.MkdirAll(curDir, 0755)
+	if err := os.MkdirAll(curDir, 0o750); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
 
 	// Create a valid email
 	validEmail := `From: Test User <test@example.com>
@@ -294,13 +310,13 @@ Message-ID: <valid@example.com>
 This is a valid email.
 `
 	validPath := filepath.Join(curDir, "valid.eml")
-	if err := os.WriteFile(validPath, []byte(validEmail), 0644); err != nil {
+	if err := os.WriteFile(validPath, []byte(validEmail), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Create an invalid email
 	invalidPath := filepath.Join(curDir, "invalid.eml")
-	if err := os.WriteFile(invalidPath, []byte("invalid"), 0644); err != nil {
+	if err := os.WriteFile(invalidPath, []byte("invalid"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -314,7 +330,7 @@ Message-ID: <skip@example.com>
 This should be skipped.
 `
 	skipPath := filepath.Join(curDir, "skip.eml")
-	if err := os.WriteFile(skipPath, []byte(skipEmail), 0644); err != nil {
+	if err := os.WriteFile(skipPath, []byte(skipEmail), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

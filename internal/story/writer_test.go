@@ -34,12 +34,12 @@ func TestWriter_WriteToDir(t *testing.T) {
 	expectedFilename := "2006-01-02_test123@example.com_1.json"
 	expectedPath := filepath.Join(tmpDir, expectedFilename)
 
-	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(expectedPath); os.IsNotExist(statErr) {
 		t.Errorf("Expected file %s was not created", expectedPath)
 	}
 
 	// Read and verify content
-	content, err := os.ReadFile(expectedPath)
+	content, err := os.ReadFile(expectedPath) //nolint:gosec // G304: Reading test file we just created
 	if err != nil {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestWriter_FilePermissions(t *testing.T) {
 	}
 
 	mode := fileInfo.Mode()
-	expectedMode := os.FileMode(0600)
+	expectedMode := os.FileMode(0o600)
 
 	if mode.Perm() != expectedMode {
 		t.Errorf("File permissions = %04o, want %04o (owner read/write only for privacy)",

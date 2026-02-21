@@ -35,7 +35,10 @@ func ListSavedFilenames(savedir string) (map[string]bool, error) {
 	return filenames, nil
 }
 
+// ErrAlreadySaved is returned when attempting to save a story that already exists.
 var ErrAlreadySaved = errors.New("story is already saved")
+
+// ErrInvalidFilename is returned when the filename contains path separators or is empty.
 var ErrInvalidFilename = errors.New("invalid filename")
 
 // Save copies a story JSON file from storydir to savedir.
@@ -45,7 +48,7 @@ func Save(storydir, savedir, filename string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(savedir, 0700); err != nil {
+	if err := os.MkdirAll(savedir, 0o700); err != nil {
 		return fmt.Errorf("failed to create savedir: %w", err)
 	}
 
@@ -57,7 +60,7 @@ func Save(storydir, savedir, filename string) error {
 	}
 
 	srcPath := filepath.Join(storydir, filename)
-	data, err := os.ReadFile(srcPath)
+	data, err := os.ReadFile(srcPath) //nolint:gosec // G304: Filename validated above (no path separators)
 	if err != nil {
 		return fmt.Errorf("failed to read story file: %w", err)
 	}
@@ -70,23 +73,23 @@ func Save(storydir, savedir, filename string) error {
 
 	n, err := tmpFile.Write(data)
 	if err != nil {
-		tmpFile.Close()
-		os.Remove(tmpPath)
+		_ = tmpFile.Close()    //nolint:errcheck // Best effort cleanup in error path
+		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}
 	if n != len(data) {
-		tmpFile.Close()
-		os.Remove(tmpPath)
+		_ = tmpFile.Close()    //nolint:errcheck // Best effort cleanup in error path
+		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("short write: wrote %d of %d bytes", n, len(data))
 	}
 
 	if err := tmpFile.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
 	if err := os.Rename(tmpPath, destPath); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath) //nolint:errcheck // Best effort cleanup in error path
 		return fmt.Errorf("failed to rename temp file: %w", err)
 	}
 

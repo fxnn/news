@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -61,7 +62,7 @@ func (p *Processor) Run() (*Result, error) {
 		p.log.Debug("processing email", "index", i+1, "path", path)
 
 		if err := p.processEmail(i, path); err != nil {
-			if err == errSkipped {
+			if errors.Is(err, errSkipped) {
 				result.Skipped++
 			} else {
 				p.log.Warn("failed to process email", "path", path, "error", err)
@@ -86,14 +87,17 @@ var errSkipped = fmt.Errorf("email skipped")
 
 func (p *Processor) processEmail(index int, path string) error {
 	// Open and parse email
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec // G304: Path is from maildir reader, validated by caller
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			p.log.Warn("failed to close file", "path", path, "error", closeErr)
+		}
+	}()
 
 	parsedEmail, err := email.Parse(file)
-	file.Close()
-
 	if err != nil {
 		return fmt.Errorf("failed to parse email: %w", err)
 	}
